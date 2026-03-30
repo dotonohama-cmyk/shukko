@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="出庫管理">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<title>出庫管理システム</title>
+<style>
+  :root {
+    --bg: #f0f2f5;
+    --surface: #ffffff;
+    --surface2: #f8f9fb;
+    --border: #e2e6ea;
+    --border-light: #eef0f3;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --accent-dark: #1d4ed8;
+    --text: #1e293b;
+    --text-mid: #475569;
+    --text-muted: #94a3b8;
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ===== HEADER ===== */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+  .app-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .app-title span {
+    color: var(--accent);
+  }
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  /* ===== MAIN LAYOUT ===== */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  /* ===== TOOLBAR ===== */
+  .toolbar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    flex-wrap: wrap;
+  }
+
+  .search-wrap {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+  }
+  .search-input {
+    width: 100%;
+    padding: 8px 12px 8px 34px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface2);
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .search-input:focus {
+    border-color: var(--accent);
+    background: #fff;
+  }
+  .search-input::placeholder { color: var(--text-muted); }
+
+  .btn {
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text-mid);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--border-light); color: var(--text); }
+  .btn-success {
+    background: var(--green);
+    color: #fff;
+  }
+  .btn-success:hover { background: #15803d; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    padding: 6px 10px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); background: var(--surface2); }
+
+  /* ===== STATS BAR ===== */
+  .stats-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    box-shadow: var(--shadow);
+    flex: 1;
+    min-width: 120px;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+    margin-top: 2px;
+  }
+  .stat-value.blue { color: var(--accent); }
+  .stat-value.green { color: var(--green); }
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  /* ===== SORT BAR ===== */
+  .sort-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow);
+    flex-wrap: wrap;
+  }
+  .sort-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .sort-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-mid);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .sort-btn:hover { background: var(--border-light); color: var(--text); }
+  .sort-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .sort-divider {
+    width: 1px;
+    height: 18px;
+    background: var(--border);
+    margin: 0 2px;
+  }
+
+  /* グループ削除ボタン */
+  .btn-group-del {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .btn-group-del:hover {
+    background: var(--red-light);
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .accordion-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .accordion-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+  }
+  .accordion-item:hover {
+    box-shadow: var(--shadow-md);
+  }
+  .accordion-item.open {
+    border-color: #bfdbfe;
+    box-shadow: 0 0 0 1px #bfdbfe, var(--shadow-md);
+  }
+
+  /* アコーディオンヘッダー = L2+M2+P2 / L5+M5+P5 相当 */
+  .accordion-header {
+    display: grid;
+    grid-template-columns: 28px 1fr 110px 90px 90px 28px;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface);
+    transition: background 0.1s;
+  }
+  .accordion-header:hover { background: #fafbfc; }
+  .accordion-item.open .accordion-header {
+    background: var(--accent-light);
+    border-bottom: 1px solid #dbeafe;
+  }
+
+  .acc-toggle {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .accordion-item.open .acc-toggle {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .acc-toggle svg { transition: transform 0.2s; }
+  .accordion-item.open .acc-toggle svg { transform: rotate(90deg); }
+
+  .acc-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .acc-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .acc-member {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .acc-car {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .acc-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-count {
+    background: #eff6ff;
+    color: var(--accent);
+    border: 1px solid #bfdbfe;
+  }
+
+  .acc-total-col {
+    text-align: right;
+  }
+  .acc-total-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .acc-total-val {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* ===== ACCORDION BODY = 明細行 ===== */
+  .accordion-body {
+    display: none;
+    padding: 0 14px 12px;
+    background: var(--surface2);
+  }
+  .accordion-item.open .accordion-body {
+    display: block;
+  }
+
+  /* ===== 明細カード ===== */
+  .detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 0 4px;
+  }
+
+  /* 明細行 = C5+E5+G5+I5+N5 / C6+E6... 相当 */
+  .detail-row {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* 上段：4つのラベル付きタグ */
+  .detail-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .detail-tag {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 4px 10px;
+    min-width: 72px;
+  }
+  .tag-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .tag-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .tag-code {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* 色分けアクセント */
+  .detail-tag.t-gensaishu { border-left: 3px solid #7c3aed; }
+  .detail-tag.t-santi     { border-left: 3px solid #0891b2; }
+  .detail-tag.t-hinshu    { border-left: 3px solid #16a34a; }
+  .detail-tag.t-kikaku    { border-left: 3px solid #ea580c; }
+
+  /* 下段：基数・重量 */
+  .detail-nums {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border-top: 1px solid var(--border-light);
+    padding-top: 7px;
+    justify-content: flex-end;
+  }
+  .detail-num-item {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+  }
+  .num-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .num-value {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .num-unit {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* 明細フッター（合計） */
+  .detail-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 20px;
+    padding: 8px 14px;
+    border-top: 2px solid var(--border);
+    margin-top: 2px;
+    background: var(--accent-light);
+    border-radius: var(--radius-sm);
+  }
+  .footer-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-right: auto;
+  }
+  .footer-item {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+  }
+  .footer-val {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .footer-unit {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* ===== コード記入欄 ===== */
+  .code-inputs-section {
+    border-top: 1px solid var(--border-light);
+    padding-top: 8px;
+    margin-top: 2px;
+  }
+  .code-inputs-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .code-inputs-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .code-input-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .code-input-num {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-muted);
+    line-height: 1;
+  }
+  .code-input {
+    width: 72px;
+    padding: 5px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--surface2);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    font-family: 'Courier New', monospace;
+  }
+  .code-input:focus {
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+  }
+  .code-input.filled {
+    border-color: var(--green);
+    background: var(--green-light);
+    color: var(--green);
+  }
+
+  /* ===== IMPORT MODAL ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    width: 420px;
+    max-width: 95vw;
+    padding: 24px;
+  }
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--surface2);
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .drop-zone svg { color: var(--text-muted); margin-bottom: 8px; }
+  .drop-text { font-size: 13px; color: var(--text-mid); }
+  .drop-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  #fileInput { display: none; }
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: flex-end;
+  }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--text);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-md);
+    transform: translateY(60px);
+    opacity: 0;
+    transition: all 0.25s;
+    z-index: 300;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: var(--green); }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state svg { margin-bottom: 12px; opacity: 0.4; }
+  .empty-title { font-size: 15px; font-weight: 600; color: var(--text-mid); }
+  .empty-sub { font-size: 13px; margin-top: 4px; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 700px) {
+    .detail-tags { gap: 4px; }
+    .detail-tag { min-width: 60px; padding: 3px 8px; }
+    .tag-value { font-size: 12px; }
+    .accordion-header {
+      grid-template-columns: 28px 1fr 90px 80px 28px;
+    }
+    .acc-total-col:first-of-type { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== APP HEADER ===== -->
+<header class="app-header">
+  <div class="app-title">出庫<span>管理</span>システム</div>
+  <div class="header-actions">
+    <button class="btn btn-secondary" onclick="exportCSV()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      CSV出力
+    </button>
+    <button class="btn btn-primary" onclick="openImport()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      インポート
+    </button>
+  </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+
+  <!-- SORT BAR -->
+  <div class="sort-bar">
+    <span class="sort-label">日付で絞込</span>
+    <div id="dateSortBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    <div class="sort-divider"></div>
+    <button class="sort-btn" id="sortAsc" onclick="setSortOrder('asc')">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+      昇順
+    </button>
+    <button class="sort-btn" id="sortDesc" onclick="setSortOrder('desc')">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      降順
+    </button>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" type="text" id="searchInput" placeholder="組合員名・品種・産地で検索…" oninput="filterRecords()">
+    </div>
+    <button class="btn btn-secondary" onclick="toggleAll(true)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+      全展開
+    </button>
+    <button class="btn btn-secondary" onclick="toggleAll(false)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="18 15 12 9 6 15"/></svg>
+      全折畳
+    </button>
+    <button class="btn btn-ghost" onclick="clearAll()">クリア</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+      <div class="stat-label">組合員数</div>
+      <div class="stat-value blue" id="statMembers">0</div>
+      <div class="stat-sub">人</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">総明細数</div>
+      <div class="stat-value" id="statRows">0</div>
+      <div class="stat-sub">件</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">総基数</div>
+      <div class="stat-value green" id="statBase">0</div>
+      <div class="stat-sub">基</div>
+    </div>
+  </div>
+
+  <!-- ACCORDION LIST -->
+  <div class="accordion-list" id="accordionList">
+    <div class="empty-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <div class="empty-title">データがありません</div>
+      <div class="empty-sub">「インポート」ボタンからExcelファイルを読み込んでください</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== IMPORT MODAL ===== -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <div class="modal-title">📂 データインポート</div>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()"
+         ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div class="drop-text">クリックまたはドラッグ&ドロップ</div>
+      <div class="drop-sub">.xlsx / .xls ファイルに対応</div>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleFile(event)">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeImport()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ===== STATE =====
+let allData = [];
+let groups = {};
+let sortOrder = 'asc';       // 'asc' | 'desc'
+let activeDates = new Set(); // 絞込中の日付（空=全表示）
+
+// ===== SAMPLE DATA (サンプル) =====
+const sampleData = [
+  { 日付:'2026-03-30', 原採種コード:1, 原採種:'原種', 産地コード:1, 産地:'栃木', 品種コード:1, 品種:'とちおとめ', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:123456, 組合員:'中村　剛也', 基数:3, 重量:600, 車番:'00-60' },
+  { 日付:'2026-03-30', 原採種コード:1, 原採種:'原種', 産地コード:2, 産地:'福岡', 品種コード:2, 品種:'あまおう', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:123456, 組合員:'中村　剛也', 基数:2, 重量:400, 車番:'00-60' },
+  { 日付:'2026-03-30', 原採種コード:2, 原採種:'採種', 産地コード:2, 産地:'福岡', 品種コード:2, 品種:'あまおう', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:123456, 組合員:'中村　剛也', 基数:3.5, 重量:700, 車番:'00-60' },
+  { 日付:'2026-03-30', 原採種コード:1, 原採種:'原種', 産地コード:1, 産地:'栃木', 品種コード:1, 品種:'とちおとめ', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:235698, 組合員:'栗山　巧', 基数:2, 重量:400, 車番:'00-01' },
+  { 日付:'2026-03-30', 原採種コード:1, 原採種:'原種', 産地コード:2, 産地:'福岡', 品種コード:2, 品種:'あまおう', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:235698, 組合員:'栗山　巧', 基数:1, 重量:200, 車番:'00-01' },
+  { 日付:'2026-03-30', 原採種コード:2, 原採種:'採種', 産地コード:2, 産地:'福岡', 品種コード:2, 品種:'あまおう', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:235698, 組合員:'栗山　巧', 基数:1.2, 重量:240, 車番:'00-01' },
+];
+
+// ===== INIT =====
+window.onload = () => {
+  const saved = restoreFromStorage();
+  if (!saved) loadData(sampleData);
+};
+
+// ===== AUTOSAVE =====
+const STORAGE_KEY_DATA  = 'shutsuko_allData';
+const STORAGE_KEY_CODES = 'shutsuko_codeMemo';
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(allData));
+    // コードメモを収集して保存
+    const codes = {};
+    document.querySelectorAll('.code-input').forEach(el => {
+      const key = `${el.dataset.group}_${el.dataset.row}_${el.dataset.idx}`;
+      codes[key] = el.value;
+    });
+    localStorage.setItem(STORAGE_KEY_CODES, JSON.stringify(codes));
+  } catch(e) { /* localStorage使用不可環境では無視 */ }
+}
+
+function restoreFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_DATA);
+    if (!raw) return false;
+    const rows = JSON.parse(raw);
+    if (!rows || rows.length === 0) return false;
+    allData = rows;
+    buildGroups();
+    renderAll();
+    updateStats(allData);
+    updateSortBar();
+    // コードメモを復元
+    const codesRaw = localStorage.getItem(STORAGE_KEY_CODES);
+    if (codesRaw) {
+      const codes = JSON.parse(codesRaw);
+      Object.entries(codes).forEach(([key, val]) => {
+        const [group, row, idx] = key.split('_');
+        const el = document.querySelector(
+          `.code-input[data-group="${group}"][data-row="${row}"][data-idx="${idx}"]`
+        );
+        if (el && val) {
+          el.value = val;
+          el.classList.add('filled');
+        }
+      });
+    }
+    showToast('前回のデータを復元しました', 'success');
+    return true;
+  } catch(e) { return false; }
+}
+
+// ===== IMPORT =====
+function openImport() {
+  document.getElementById('importModal').classList.add('open');
+}
+function closeImport() {
+  document.getElementById('importModal').classList.remove('open');
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.add('drag-over');
+}
+function onDragLeave(e) {
+  document.getElementById('dropZone').classList.remove('drag-over');
+}
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) readExcel(file);
+}
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (file) readExcel(file);
+}
+
+function readExcel(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      // 列名マッピング（Excel列名→アプリ内キー）
+      const mapped = rows.map(r => ({
+        日付: formatDate(r['日付'] || r['date'] || ''),
+        原採種コード: r['原採種コード'] || 0,
+        原採種: r['原採種'] || '',
+        産地コード: r['産地コード'] || 0,
+        産地: r['産地'] || '',
+        品種コード: r['品種コード'] || 0,
+        品種: r['品種'] || '',
+        規格コード: r['規格コード'] || 0,
+        規格: r['規格'] || '',
+        荷姿コード: r['荷姿コード'] || 0,
+        荷姿: r['荷姿'] || '',
+        組合員コード: r['組合員コード'] || 0,
+        組合員: r['組合員'] || '',
+        基数: parseFloat(r['基数'] || 0),
+        重量: parseFloat(r['重量'] || 0),
+        車番: r['車番'] || '',
+      }));
+      loadData(mapped, true); // 追記モード
+      closeImport();
+      saveToStorage();
+      showToast(`${mapped.length}件を追記しました`, 'success');
+    } catch(err) {
+      showToast('ファイルの読み込みに失敗しました');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function formatDate(v) {
+  if (!v) return '';
+  if (v instanceof Date) {
+    return v.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' });
+  }
+  return String(v).split('T')[0];
+}
+
+// ===== LOAD DATA （追記モード） =====
+function loadData(rows, append = false) {
+  if (append) {
+    allData = [...allData, ...rows];
+  } else {
+    allData = rows;
+  }
+  buildGroups();
+  renderAll();
+  updateStats(allData);
+  updateSortBar();
+}
+
+function buildGroups() {
+  groups = {};
+  allData.forEach(r => {
+    // 組合員コード＋日付でグループキーを作る（追記時に日付違いを別グループに）
+    const key = `${r.組合員コード}_${r.日付}`;
+    if (!groups[key]) groups[key] = { meta: r, rows: [] };
+    groups[key].rows.push(r);
+  });
+}
+
+function updateSortBar() {
+  // 日付一覧を収集してボタン生成
+  const dates = [...new Set(allData.map(r => r.日付))].sort();
+  const container = document.getElementById('dateSortBtns');
+  if (!container) return;
+  if (dates.length === 0) { container.innerHTML = ''; return; }
+
+  container.innerHTML = dates.map(d => `
+    <button class="sort-btn ${activeDates.has(d) ? 'active' : ''}"
+      onclick="toggleDateFilter('${d}')">${d}</button>
+  `).join('');
+
+  // 昇順・降順ボタンの状態反映
+  document.getElementById('sortAsc').classList.toggle('active', sortOrder === 'asc');
+  document.getElementById('sortDesc').classList.toggle('active', sortOrder === 'desc');
+}
+
+// ===== RENDER =====
+function renderAll(filterText='') {
+  const list = document.getElementById('accordionList');
+  const q = (filterText || document.getElementById('searchInput')?.value || '').toLowerCase();
+
+  let keys = Object.keys(groups).filter(k => {
+    const g = groups[k];
+    // 日付フィルター
+    if (activeDates.size > 0 && !activeDates.has(g.meta.日付)) return false;
+    // テキスト検索
+    if (!q) return true;
+    const match = str => String(str).toLowerCase().includes(q);
+    return match(g.meta.組合員) || g.rows.some(r => match(r.品種) || match(r.産地) || match(r.原採種));
+  });
+
+  // 日付ソート
+  keys.sort((a, b) => {
+    const da = groups[a].meta.日付 || '';
+    const db = groups[b].meta.日付 || '';
+    return sortOrder === 'asc' ? da.localeCompare(db) : db.localeCompare(da);
+  });
+
+  if (keys.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <div class="empty-title">${q || activeDates.size > 0 ? '該当データなし' : 'データがありません'}</div>
+      <div class="empty-sub">${q || activeDates.size > 0 ? '条件を変更してください' : '「インポート」ボタンからファイルを読み込んでください'}</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = keys.map(k => renderGroup(k, groups[k])).join('');
+}
+
+function renderGroup(key, group) {
+  const rows = group.rows;
+  const meta = group.meta;
+  const totalBase = rows.reduce((s, r) => s + (r.基数 || 0), 0);
+  const totalWeight = rows.reduce((s, r) => s + (r.重量 || 0), 0);
+
+  const detailRows = rows.map((r, i) => {
+    const inputCount = Math.ceil(r.基数);
+    const inputs = Array.from({length: inputCount}, (_, n) => `
+      <div class="code-input-wrap">
+        <span class="code-input-num">${n + 1}基目</span>
+        <input
+          class="code-input"
+          type="text"
+          placeholder="コード"
+          data-group="${key}"
+          data-row="${i}"
+          data-idx="${n}"
+          oninput="onCodeInput(this)"
+          onkeydown="onCodeKeydown(event, this)"
+        >
+      </div>
+    `).join('');
+
+    return `
+    <div class="detail-row" id="row-${key}-${i}">
+      <div class="detail-tags">
+        <div class="detail-tag t-gensaishu">
+          <span class="tag-label">原採種</span>
+          <span class="tag-value">${r.原採種}</span>
+          <span class="tag-code">#${r.原採種コード}</span>
+        </div>
+        <div class="detail-tag t-santi">
+          <span class="tag-label">産地</span>
+          <span class="tag-value">${r.産地}</span>
+          <span class="tag-code">#${r.産地コード}</span>
+        </div>
+        <div class="detail-tag t-hinshu">
+          <span class="tag-label">品種</span>
+          <span class="tag-value">${r.品種}</span>
+          <span class="tag-code">#${r.品種コード}</span>
+        </div>
+        <div class="detail-tag t-kikaku">
+          <span class="tag-label">規格</span>
+          <span class="tag-value">${r.規格}</span>
+          <span class="tag-code">#${r.規格コード}</span>
+        </div>
+      </div>
+      <div class="detail-nums">
+        <div class="detail-num-item">
+          <span class="num-label">基数</span>
+          <span class="num-value">${r.基数}</span>
+          <span class="num-unit">基</span>
+        </div>
+      </div>
+      <div class="code-inputs-section">
+        <div class="code-inputs-label">コードメモ（基ごと）</div>
+        <div class="code-inputs-grid">${inputs}</div>
+      </div>
+    </div>
+  `;
+  }).join('');
+
+  return `
+  <div class="accordion-item" id="group-${key}">
+    <div class="accordion-header" onclick="toggleGroup('${key}')">
+      <div class="acc-toggle">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="acc-main">
+        <span class="acc-date">${meta.日付}</span>
+        <span class="acc-member">${meta.組合員}</span>
+        <span class="acc-car">🚚 ${meta.車番} &nbsp;|&nbsp; #${meta.組合員コード}</span>
+      </div>
+      <div>
+        <span class="acc-badge badge-count">${rows.length}件</span>
+      </div>
+      <div class="acc-total-col">
+        <div class="acc-total-label">基数</div>
+        <div class="acc-total-val">${totalBase}</div>
+      </div>
+      <div style="color:var(--text-muted)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      </div>
+      <button class="btn-group-del" title="このグループを削除" onclick="deleteGroup('${key}'); event.stopPropagation()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>
+    <div class="accordion-body">
+      <div class="detail-list">
+        ${detailRows}
+      </div>
+      <div class="detail-footer">
+        <span class="footer-label">合計</span>
+        <div class="footer-item">
+          <span class="footer-val">${totalBase}</span>
+          <span class="footer-unit">基</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===== TOGGLE =====
+function toggleGroup(key) {
+  const el = document.getElementById(`group-${key}`);
+  el.classList.toggle('open');
+}
+function toggleAll(open) {
+  document.querySelectorAll('.accordion-item').forEach(el => {
+    el.classList.toggle('open', open);
+  });
+}
+
+// ===== CODE INPUT =====
+function onCodeInput(el) {
+  el.classList.toggle('filled', el.value.trim() !== '');
+  saveToStorage();
+}
+
+function onCodeKeydown(e, el) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+
+  // 全 .code-input をDOM順で取得し、現在位置の次へフォーカス
+  const allInputs = Array.from(document.querySelectorAll('.code-input'));
+  const idx = allInputs.indexOf(el);
+  if (idx >= 0 && idx < allInputs.length - 1) {
+    // 次の入力欄が属するアコーディオンが閉じていれば開く
+    const next = allInputs[idx + 1];
+    const item = next.closest('.accordion-item');
+    if (item && !item.classList.contains('open')) {
+      item.classList.add('open');
+    }
+    next.focus();
+    next.select();
+  }
+}
+
+// ===== SORT =====
+function setSortOrder(order) {
+  sortOrder = order;
+  updateSortBar();
+  renderAll();
+}
+
+function toggleDateFilter(date) {
+  if (activeDates.has(date)) {
+    activeDates.delete(date);
+  } else {
+    activeDates.add(date);
+  }
+  updateSortBar();
+  renderAll();
+}
+
+// ===== DELETE GROUP =====
+function deleteGroup(key) {
+  const g = groups[key];
+  const label = g ? `${g.meta.組合員}（${g.meta.日付}）` : key;
+  if (!confirm(`「${label}」のデータを削除しますか？`)) return;
+  // allDataから該当行を除外
+  const rowsToRemove = new Set(groups[key].rows);
+  allData = allData.filter(r => !rowsToRemove.has(r));
+  delete groups[key];
+  updateSortBar();
+  renderAll();
+  updateStats(allData);
+  saveToStorage();
+  showToast('削除しました');
+}
+
+// ===== FILTER =====
+function filterRecords() {
+  const q = document.getElementById('searchInput').value;
+  renderAll(q);
+}
+
+// ===== DELETE ROW =====
+function deleteRow(key, idx) {
+  if (!confirm('この明細を削除しますか？')) return;
+  groups[key].rows.splice(idx, 1);
+  if (groups[key].rows.length === 0) delete groups[key];
+  // allData sync
+  allData = Object.values(groups).flatMap(g => g.rows);
+  renderAll(document.getElementById('searchInput').value);
+  updateStats(allData);
+  showToast('削除しました');
+}
+
+// ===== CLEAR =====
+function clearAll() {
+  if (!confirm('全データをクリアしますか？')) return;
+  allData = [];
+  groups = {};
+  activeDates = new Set();
+  try {
+    localStorage.removeItem(STORAGE_KEY_DATA);
+    localStorage.removeItem(STORAGE_KEY_CODES);
+  } catch(e) {}
+  updateSortBar();
+  renderAll();
+  updateStats([]);
+  showToast('クリアしました');
+}
+
+// ===== STATS =====
+function updateStats(rows) {
+  const members = new Set(rows.map(r => r.組合員コード)).size;
+  const base = rows.reduce((s, r) => s + (r.基数 || 0), 0);
+  document.getElementById('statMembers').textContent = members;
+  document.getElementById('statRows').textContent = rows.length;
+  document.getElementById('statBase').textContent = base;
+}
+
+// ===== CSV出力 =====
+function exportCSV() {
+  if (allData.length === 0) { showToast('出力するデータがありません'); return; }
+
+  // インポートデータの列順（A〜P列相当）
+  const baseColumns = [
+    '日付','原採種コード','原採種','産地コード','産地',
+    '品種コード','品種','規格コード','規格','荷姿コード','荷姿',
+    '組合員コード','組合員','基数','重量','車番'
+  ];
+
+  // コードメモ入力欄を全取得してインデックス化
+  // key: "group-row-idx" → value
+  const inputMap = {};
+  document.querySelectorAll('.code-input').forEach(el => {
+    const g = el.dataset.group;
+    const r = el.dataset.row;
+    const n = el.dataset.idx;
+    if (!inputMap[g]) inputMap[g] = {};
+    if (!inputMap[g][r]) inputMap[g][r] = {};
+    inputMap[g][r][n] = el.value.trim();
+  });
+
+  // コードメモが1つでも入力されている行のみ出力
+  const outputRows = [];
+
+  Object.keys(groups).forEach(groupKey => {
+    const g = groups[groupKey];
+    g.rows.forEach((row, rowIdx) => {
+      const rowCodes = inputMap[groupKey]?.[rowIdx] || {};
+      const codeValues = Object.values(rowCodes).filter(v => v !== '');
+      if (codeValues.length === 0) return; // 入力なしはスキップ
+
+      // A〜P列のデータ（車番=P列は空欄）
+      const baseValues = baseColumns.map(col => {
+        if (col === '車番') return ''; // P列は空欄
+        const v = row[col];
+        if (v === null || v === undefined) return '';
+        // カンマ・改行・ダブルクォートを含む場合はクォート
+        const s = String(v);
+        if (s.includes(',') || s.includes('\n') || s.includes('"')) {
+          return '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      });
+
+      // Q列は空欄、R列以降にコードメモ（入力済みのもの全て）
+      const allCodes = Object.keys(rowCodes)
+        .sort((a, b) => Number(a) - Number(b))
+        .map(k => rowCodes[k]);
+
+      const codeFields = allCodes.map(v => {
+        if (v.includes(',') || v.includes('\n') || v.includes('"')) {
+          return '"' + v.replace(/"/g, '""') + '"';
+        }
+        return v;
+      });
+
+      outputRows.push([...baseValues, '', ...codeFields].join(','));
+    });
+  });
+
+  if (outputRows.length === 0) {
+    showToast('コードメモが入力された行がありません');
+    return;
+  }
+
+  // ヘッダー行：A〜P + Q(空) + R列以降はコード1,コード2...
+  // R列以降の最大数を求める
+  let maxCodes = 0;
+  Object.keys(groups).forEach(groupKey => {
+    const g = groups[groupKey];
+    g.rows.forEach((_, rowIdx) => {
+      const rowCodes = inputMap[groupKey]?.[rowIdx] || {};
+      maxCodes = Math.max(maxCodes, Object.keys(rowCodes).length);
+    });
+  });
+  const codeHeaders = Array.from({length: maxCodes}, (_, i) => `コード${i + 1}`);
+  const headerRow = [...baseColumns, '', ...codeHeaders].join(',');
+
+  const csv = [headerRow, ...outputRows].join('\r\n');
+
+  // BOM付きUTF-8（Excelで文字化けしないように）
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `出庫コードメモ_${new Date().toLocaleDateString('ja-JP').replace(/\//g, '-')}.csv`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`${outputRows.length}件を出力しました`, 'success');
+}
+
+// ===== TOAST =====
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ` ${type}` : '');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== KEYBOARD / CLOSE MODAL =====
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeImport();
+});
+document.getElementById('importModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeImport();
+});
+
+// ===== SERVICE WORKER登録 =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
