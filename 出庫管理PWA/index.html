@@ -3,12 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- PWA -->
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="出庫管理">
+<meta name="application-name" content="出庫管理">
 <meta name="theme-color" content="#2563eb">
+<meta name="msapplication-TileColor" content="#2563eb">
+<meta name="msapplication-tap-highlight" content="no">
+<meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
+<link rel="apple-touch-startup-image" href="icon.png">
 <title>出庫管理システム</title>
 <style>
   :root {
@@ -32,721 +39,389 @@
     --radius: 10px;
     --radius-sm: 6px;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     font-family: 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 14px;
-    min-height: 100vh;
+    background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh;
+    /* iOSセーフエリア対応 */
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
+
 
   /* ===== HEADER ===== */
-  .app-header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: var(--shadow);
-  }
-  .app-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.01em;
-  }
-  .app-title span {
-    color: var(--accent);
-  }
-  .header-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
+  .app-header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 14px; padding-left:max(14px, env(safe-area-inset-left)); padding-right:max(14px, env(safe-area-inset-right)); height:52px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:var(--shadow); }
+  .app-title { font-size:15px; font-weight:700; }
+  .app-title span { color:var(--accent); }
+  .header-actions { display:flex; gap:6px; }
 
-  /* ===== MAIN LAYOUT ===== */
-  .main {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 20px 16px;
-  }
+  /* ===== BUTTONS ===== */
+  .btn { padding:7px 11px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; border:none; display:flex; align-items:center; gap:5px; white-space:nowrap; transition:all 0.15s; font-family:inherit; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { background:var(--accent-dark); }
+  .btn-secondary { background:var(--surface2); color:var(--text-mid); border:1px solid var(--border); }
+  .btn-secondary:hover { background:var(--border-light); color:var(--text); }
+  .btn-ghost { background:transparent; color:var(--text-muted); border:1px solid var(--border); font-size:11px; padding:5px 9px; }
+  .btn-ghost:hover { color:var(--text); background:var(--surface2); }
 
-  /* ===== TOOLBAR ===== */
-  .toolbar {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 16px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 16px;
-    box-shadow: var(--shadow);
-    flex-wrap: wrap;
-  }
-
-  .search-wrap {
-    flex: 1;
-    min-width: 200px;
-    position: relative;
-  }
-  .search-wrap svg {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-  }
-  .search-input {
-    width: 100%;
-    padding: 8px 12px 8px 34px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    color: var(--text);
-    background: var(--surface2);
-    outline: none;
-    transition: border-color 0.15s;
-    font-family: inherit;
-  }
-  .search-input:focus {
-    border-color: var(--accent);
-    background: #fff;
-  }
-  .search-input::placeholder { color: var(--text-muted); }
-
-  .btn {
-    padding: 8px 14px;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-    transition: all 0.15s;
-    font-family: inherit;
-  }
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-  }
-  .btn-primary:hover { background: var(--accent-dark); }
-  .btn-secondary {
-    background: var(--surface2);
-    color: var(--text-mid);
-    border: 1px solid var(--border);
-  }
-  .btn-secondary:hover { background: var(--border-light); color: var(--text); }
-  .btn-success {
-    background: var(--green);
-    color: #fff;
-  }
-  .btn-success:hover { background: #15803d; }
-
-  .btn-ghost {
-    background: transparent;
-    color: var(--text-muted);
-    padding: 6px 10px;
-    font-size: 12px;
-    border: 1px solid var(--border);
-  }
-  .btn-ghost:hover { color: var(--text); background: var(--surface2); }
-
-  /* ===== STATS BAR ===== */
-  .stats-bar {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 16px;
-    box-shadow: var(--shadow);
-    flex: 1;
-    min-width: 120px;
-  }
-  .stat-label {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-  .stat-value {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.2;
-    margin-top: 2px;
-  }
-  .stat-value.blue { color: var(--accent); }
-  .stat-value.green { color: var(--green); }
-  .stat-sub {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 1px;
-  }
+  /* ===== MAIN ===== */
+  .main { max-width:900px; margin:0 auto; padding:12px 10px; padding-left:max(10px, env(safe-area-inset-left)); padding-right:max(10px, env(safe-area-inset-right)); padding-bottom:max(16px, env(safe-area-inset-bottom)); }
 
   /* ===== SORT BAR ===== */
-  .sort-bar {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 8px 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    box-shadow: var(--shadow);
-    flex-wrap: wrap;
-  }
-  .sort-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    white-space: nowrap;
-  }
-  .sort-btn {
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--surface2);
-    color: var(--text-mid);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.15s;
-    font-family: inherit;
-  }
-  .sort-btn:hover { background: var(--border-light); color: var(--text); }
-  .sort-btn.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-  }
-  .sort-divider {
-    width: 1px;
-    height: 18px;
-    background: var(--border);
-    margin: 0 2px;
-  }
+  .sort-bar { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:8px 12px; display:flex; align-items:center; gap:8px; margin-bottom:8px; box-shadow:var(--shadow); flex-wrap:wrap; }
+  .sort-label { font-size:11px; font-weight:700; color:var(--text-muted); white-space:nowrap; }
+  .sort-btn { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--surface2); color:var(--text-mid); transition:all 0.15s; font-family:inherit; }
+  .sort-btn:hover { background:var(--border-light); }
+  .sort-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .sort-divider { width:1px; height:16px; background:var(--border); }
 
-  /* グループ削除ボタン */
-  .btn-group-del {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    border-radius: var(--radius-sm);
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 0.15s;
-    padding: 0;
-  }
-  .btn-group-del:hover {
-    background: var(--red-light);
-    border-color: var(--red);
-    color: var(--red);
-  }
-  .accordion-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
+  /* ===== TOOLBAR ===== */
+  .toolbar { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:8px 10px; display:flex; gap:7px; align-items:center; margin-bottom:10px; box-shadow:var(--shadow); flex-wrap:wrap; }
+  .search-wrap { flex:1; min-width:160px; position:relative; }
+  .search-wrap svg { position:absolute; left:8px; top:50%; transform:translateY(-50%); color:var(--text-muted); }
+  .search-input { width:100%; padding:7px 10px 7px 28px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; color:var(--text); background:var(--surface2); outline:none; transition:border-color 0.15s; font-family:inherit; }
+  .search-input:focus { border-color:var(--accent); background:#fff; }
+  .search-input::placeholder { color:var(--text-muted); }
 
-  .accordion-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    transition: box-shadow 0.15s;
-  }
-  .accordion-item:hover {
-    box-shadow: var(--shadow-md);
-  }
-  .accordion-item.open {
-    border-color: #bfdbfe;
-    box-shadow: 0 0 0 1px #bfdbfe, var(--shadow-md);
-  }
 
-  /* アコーディオンヘッダー = L2+M2+P2 / L5+M5+P5 相当 */
-  .accordion-header {
-    display: grid;
-    grid-template-columns: 28px 1fr 110px 90px 90px 28px;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    cursor: pointer;
-    user-select: none;
-    background: var(--surface);
-    transition: background 0.1s;
-  }
-  .accordion-header:hover { background: #fafbfc; }
-  .accordion-item.open .accordion-header {
-    background: var(--accent-light);
-    border-bottom: 1px solid #dbeafe;
-  }
 
-  .acc-toggle {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.2s;
-  }
-  .accordion-item.open .acc-toggle {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-  .acc-toggle svg { transition: transform 0.2s; }
-  .accordion-item.open .acc-toggle svg { transform: rotate(90deg); }
+  /* ===== ACCORDION ===== */
+  .accordion-list { display:flex; flex-direction:column; gap:7px; }
+  .accordion-item { border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; border:1px solid var(--border); transition:box-shadow 0.15s,opacity 0.3s; }
+  .accordion-item.open { box-shadow:var(--shadow-md); }
+  .accordion-item.done { opacity:0.5; filter:grayscale(0.3); }
+  .accordion-item.done .accordion-header { background:#f1f5f9 !important; }
 
-  .acc-main {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-  }
-  .acc-date {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 600;
-  }
-  .acc-member {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .acc-car {
-    font-size: 11px;
-    color: var(--text-muted);
-  }
+  /* ヘッダー: toggle / 名前+メタ / 出庫予定時間 / 基数 / 優先ボタン / 出庫終了ボタン / 削除ボタン */
+  .accordion-header { display:grid; grid-template-columns:24px 1fr auto auto auto auto auto; align-items:center; gap:7px; padding:10px 11px; cursor:pointer; user-select:none; background:var(--surface); transition:background 0.1s; }
+  .accordion-header:hover { background:#fafbfc; }
+  .accordion-item.open .accordion-header { border-bottom:1px solid var(--border-light); }
 
-  .acc-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
-  }
-  .badge-count {
-    background: #eff6ff;
-    color: var(--accent);
-    border: 1px solid #bfdbfe;
-  }
+  .acc-toggle { width:22px; height:22px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s; }
+  .accordion-item.open .acc-toggle { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .acc-toggle svg { transition:transform 0.2s; }
+  .accordion-item.open .acc-toggle svg { transform:rotate(90deg); }
 
-  .acc-total-col {
-    text-align: right;
-  }
-  .acc-total-label {
-    font-size: 10px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .acc-total-val {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-  }
+  .acc-main { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .acc-name { font-size:14px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex-shrink:1; }
+  .acc-car  { font-size:14px; font-weight:700; color:var(--text-mid); white-space:nowrap; flex-shrink:0; }
+  /* 車番が長い場合に文字を縮小（JS側でクラス付与） */
+  .acc-car.long { font-size:10px; font-weight:600; }
+  .acc-meta { font-size:11px; color:var(--text-muted); }
 
-  /* ===== ACCORDION BODY = 明細行 ===== */
-  .accordion-body {
-    display: none;
-    padding: 0 14px 12px;
-    background: var(--surface2);
-  }
-  .accordion-item.open .accordion-body {
-    display: block;
-  }
+  .acc-time { display:flex; flex-direction:column; align-items:flex-end; flex-shrink:0; }
+  .acc-time-label { font-size:9px; color:var(--text-muted); font-weight:700; text-transform:uppercase; }
+  .acc-time-val { font-size:15px; font-weight:800; color:var(--accent); }
+
+  .acc-base { display:flex; flex-direction:column; align-items:flex-end; flex-shrink:0; }
+  .acc-base-label { font-size:9px; color:var(--text-muted); font-weight:700; text-transform:uppercase; }
+  .acc-base-val { font-size:15px; font-weight:800; color:var(--text); }
+
+  .btn-done { flex-shrink:0; padding:5px 8px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; border:1px solid #d1d5db; background:var(--surface2); color:var(--text-muted); transition:all 0.15s; font-family:inherit; white-space:nowrap; }
+  .btn-done:hover { background:#fef3c7; border-color:#f59e0b; color:#92400e; }
+  .accordion-item.done .btn-done { background:#dcfce7; border-color:#16a34a; color:#15803d; }
+
+  .btn-priority { flex-shrink:0; padding:5px 8px; border-radius:var(--radius-sm); font-size:11px; font-weight:700; cursor:pointer; border:1px solid #d1d5db; background:var(--surface2); color:var(--text-muted); transition:all 0.15s; font-family:inherit; white-space:nowrap; }
+  .btn-priority:hover { background:#fff7ed; border-color:#f97316; color:#c2410c; }
+  .accordion-item.priority .btn-priority { background:#fff7ed; border-color:#f97316; color:#ea580c; }
+  .accordion-item.priority { background:#fff8f2; }
+  .accordion-item.priority .accordion-header { background:#fff8f2; }
+  .accordion-item.priority .accordion-body  { background:#fff3e8; }
+
+  .btn-group-del { flex-shrink:0; background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:var(--radius-sm); width:27px; height:27px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; padding:0; }
+  .btn-group-del:hover { background:var(--red-light); border-color:var(--red); color:var(--red); }
+
+  /* ===== BODY ===== */
+  .accordion-body { display:none; background:var(--surface2); padding:7px 9px 10px; }
+  .accordion-item.open .accordion-body { display:block; }
 
   /* ===== 明細カード ===== */
-  .detail-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 10px 0 4px;
-  }
+  .detail-list { display:flex; flex-direction:column; gap:6px; }
+  .detail-row { background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 11px; display:flex; flex-direction:column; gap:8px; border-left:4px solid var(--border); }
+  .detail-row.type-1 { border-left-color:#ef4444; background:#fff8f8; }
+  .detail-row.type-2 { border-left-color:#22c55e; background:#f8fff9; }
 
-  /* 明細行 = C5+E5+G5+I5+N5 / C6+E6... 相当 */
-  .detail-row {
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
+  /* 上段レイアウト: タグ群+基数 | 出庫予定時間(右端) */
+  .detail-top { display:flex; align-items:center; gap:10px; }
 
-  /* 上段：4つのラベル付きタグ */
-  .detail-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
+  /* 中央: タグ群 + 基数 */
+  .detail-center { flex:1; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .detail-tags { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
 
-  .detail-tag {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 4px 10px;
-    min-width: 72px;
-  }
-  .tag-label {
-    font-size: 9px;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .tag-value {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text);
-    white-space: nowrap;
-  }
-  .tag-code {
-    font-size: 10px;
-    color: var(--text-muted);
-  }
+  /* タグ: 枠なし、コードなし、文字大きく、黒色 */
+  .detail-tag { display:flex; flex-direction:column; gap:0px; padding:0; min-width:unset; border:none; background:none; border-radius:0; }
+  .tag-label { font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; }
+  .tag-value { font-size:15px; font-weight:700; color:var(--text); white-space:nowrap; }
 
-  /* 色分けアクセント */
-  .detail-tag.t-gensaishu { border-left: 3px solid #7c3aed; }
-  .detail-tag.t-santi     { border-left: 3px solid #0891b2; }
-  .detail-tag.t-hinshu    { border-left: 3px solid #16a34a; }
-  .detail-tag.t-kikaku    { border-left: 3px solid #ea580c; }
+  /* 基数（規格の横） */
+  .detail-kisu { display:flex; align-items:baseline; gap:3px; flex-shrink:0; }
+  .num-label { font-size:10px; color:var(--text-muted); font-weight:600; }
+  .num-value { font-size:17px; font-weight:800; color:var(--text); }
+  .num-unit  { font-size:10px; color:var(--text-muted); }
 
-  /* 下段：基数・重量 */
-  .detail-nums {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    border-top: 1px solid var(--border-light);
-    padding-top: 7px;
-    justify-content: flex-end;
-  }
-  .detail-num-item {
-    display: flex;
-    align-items: baseline;
-    gap: 3px;
-  }
-  .num-label {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 600;
-  }
-  .num-value {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--text);
-  }
-  .num-unit {
-    font-size: 11px;
-    color: var(--text-muted);
-  }
+  /* 右端: 出庫予定時間 */
+  .detail-time-block { flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:44px; }
+  .detail-time-label { font-size:9px; font-weight:700; color:var(--text-muted); text-transform:uppercase; }
+  .detail-time-val   { font-size:15px; font-weight:800; color:var(--accent); line-height:1.1; }
 
-  /* 明細フッター（合計） */
-  .detail-footer {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 20px;
-    padding: 8px 14px;
-    border-top: 2px solid var(--border);
-    margin-top: 2px;
-    background: var(--accent-light);
-    border-radius: var(--radius-sm);
-  }
-  .footer-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-muted);
-    margin-right: auto;
-  }
-  .footer-item {
-    display: flex;
-    align-items: baseline;
-    gap: 3px;
-  }
-  .footer-val {
-    font-size: 17px;
-    font-weight: 800;
-    color: var(--accent);
-  }
-  .footer-unit {
-    font-size: 11px;
-    color: var(--text-muted);
-  }
+  /* コードメモ */
+  .code-inputs-section { border-top:1px solid var(--border-light); padding-top:7px; }
+  .code-inputs-grid { display:flex; flex-wrap:wrap; gap:5px; }
+  .code-input-wrap { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .code-input-num { font-size:9px; font-weight:700; color:var(--text-muted); }
+  .code-input { width:66px; padding:5px 5px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:12px; font-weight:600; color:var(--text); background:var(--surface2); text-align:center; outline:none; transition:border-color 0.15s,background 0.15s,box-shadow 0.15s; font-family:'Courier New',monospace; }
+  .code-input:focus { border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px rgba(37,99,235,0.12); }
+  .code-input.filled { border-color:var(--green); background:var(--green-light); color:var(--green); }
 
-  /* ===== コード記入欄 ===== */
-  .code-inputs-section {
-    border-top: 1px solid var(--border-light);
-    padding-top: 8px;
-    margin-top: 2px;
-  }
-  .code-inputs-label {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 6px;
-  }
-  .code-inputs-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .code-input-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-  }
-  .code-input-num {
-    font-size: 9px;
-    font-weight: 700;
-    color: var(--text-muted);
-    line-height: 1;
-  }
-  .code-input {
-    width: 72px;
-    padding: 5px 8px;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    background: var(--surface2);
-    text-align: center;
-    outline: none;
-    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-    font-family: 'Courier New', monospace;
-  }
-  .code-input:focus {
-    border-color: var(--accent);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
-  }
-  .code-input.filled {
-    border-color: var(--green);
-    background: var(--green-light);
-    color: var(--green);
-  }
+  /* フッター */
+  .detail-footer { display:flex; justify-content:flex-end; align-items:center; gap:16px; padding:7px 10px; border-top:2px solid var(--border); margin-top:4px; background:var(--accent-light); border-radius:var(--radius-sm); }
+  .footer-label { font-size:11px; font-weight:700; color:var(--text-muted); margin-right:auto; }
+  .footer-item { display:flex; align-items:baseline; gap:3px; }
+  .footer-val { font-size:16px; font-weight:800; color:var(--accent); }
+  .footer-unit { font-size:11px; color:var(--text-muted); }
 
-  /* ===== IMPORT MODAL ===== */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface);
-    border-radius: var(--radius);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-    width: 420px;
-    max-width: 95vw;
-    padding: 24px;
-  }
-  .modal-title {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    color: var(--text);
-  }
-  .drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 32px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.15s;
-    background: var(--surface2);
-  }
-  .drop-zone:hover, .drop-zone.drag-over {
-    border-color: var(--accent);
-    background: var(--accent-light);
-  }
-  .drop-zone svg { color: var(--text-muted); margin-bottom: 8px; }
-  .drop-text { font-size: 13px; color: var(--text-mid); }
-  .drop-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-  #fileInput { display: none; }
-  .modal-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 16px;
-    justify-content: flex-end;
-  }
+  /* ===== MODAL ===== */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border-radius:var(--radius); box-shadow:0 20px 40px rgba(0,0,0,0.15); width:420px; max-width:95vw; padding:22px; }
+  .modal-title { font-size:15px; font-weight:700; margin-bottom:14px; color:var(--text); }
+  .drop-zone { border:2px dashed var(--border); border-radius:var(--radius); padding:28px 20px; text-align:center; cursor:pointer; transition:all 0.15s; background:var(--surface2); }
+  .drop-zone:hover,.drop-zone.drag-over { border-color:var(--accent); background:var(--accent-light); }
+  .drop-zone svg { color:var(--text-muted); margin-bottom:8px; }
+  .drop-text { font-size:13px; color:var(--text-mid); }
+  .drop-sub { font-size:11px; color:var(--text-muted); margin-top:4px; }
+  #fileInput { display:none; }
+  .modal-actions { display:flex; gap:8px; margin-top:14px; justify-content:flex-end; }
 
   /* ===== TOAST ===== */
-  .toast {
+  .toast { position:fixed; bottom:20px; right:20px; background:var(--text); color:#fff; padding:10px 16px; border-radius:var(--radius-sm); font-size:13px; font-weight:500; box-shadow:var(--shadow-md); transform:translateY(60px); opacity:0; transition:all 0.25s; z-index:300; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast.success { background:var(--green); }
+
+  /* ===== EMPTY ===== */
+  .empty-state { text-align:center; padding:48px 20px; color:var(--text-muted); }
+  .empty-state svg { margin-bottom:12px; opacity:0.4; }
+  .empty-title { font-size:15px; font-weight:600; color:var(--text-mid); }
+  .empty-sub { font-size:13px; margin-top:4px; }
+
+  @media (max-width:580px) {
+    .acc-time { display:none; }
+    .accordion-header { grid-template-columns:24px 1fr auto auto auto auto; }
+    .btn-priority { font-size:10px; padding:4px 6px; }
+    .btn-done     { font-size:10px; padding:4px 6px; }
+  }
+
+  /* ===== 削除モーダル ===== */
+  .del-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:center; justify-content:center; }
+  .del-modal-overlay.open { display:flex; }
+  .del-modal { background:var(--surface); border-radius:var(--radius); box-shadow:0 20px 40px rgba(0,0,0,0.18); width:340px; max-width:92vw; padding:22px; }
+  .del-modal-title { font-size:15px; font-weight:700; margin-bottom:6px; color:var(--text); display:flex; align-items:center; gap:8px; }
+  .del-modal-title svg { color:var(--red); flex-shrink:0; }
+  .del-modal-sub { font-size:12px; color:var(--text-muted); margin-bottom:16px; }
+  .del-options { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+  .del-option { border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:11px 14px; cursor:pointer; transition:all 0.15s; background:var(--surface2); }
+  .del-option:hover { border-color:var(--red); background:var(--red-light); }
+  .del-option-title { font-size:13px; font-weight:700; color:var(--text); }
+  .del-option-desc  { font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .del-modal-cancel { width:100%; padding:9px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface2); color:var(--text-mid); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .del-modal-cancel:hover { background:var(--border-light); }
+
+  /* ===== 集計ドロワー ===== */
+  #summaryDrawer {
+    position: fixed; inset: 0; z-index: 250;
+    display: none;
+  }
+  #summaryDrawer.open { display: block; }
+  .drawer-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.4);
+  }
+  .drawer-panel {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.13);
+    max-height: 82vh;
+    display: flex; flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(.32,1,.5,1);
+  }
+  #summaryDrawer.open .drawer-panel { transform: translateY(0); }
+
+  .drawer-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 10px auto 0; flex-shrink:0; }
+  .drawer-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px 10px; border-bottom: 1px solid var(--border); flex-shrink:0;
+  }
+  .drawer-title { font-size: 15px; font-weight: 700; color: var(--text); display:flex; align-items:center; gap:6px; }
+  .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; border-radius: 6px; }
+  .drawer-close:hover { background: var(--surface2); }
+
+  .drawer-filters {
+    display: flex; gap: 6px; padding: 10px 14px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border-light); flex-shrink:0;
+    overflow-x: auto;
+  }
+  .filter-chip {
+    padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    border: 1.5px solid var(--border); background: var(--surface2); color: var(--text-mid);
+    cursor: pointer; white-space: nowrap; font-family: inherit; transition: all 0.15s;
+  }
+  .filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .drawer-summary-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 14px 4px; flex-shrink:0;
+  }
+  .drawer-total-badge {
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+  }
+  .drawer-total-badge span { color: var(--accent); font-size: 14px; }
+
+  .drawer-body { overflow-y: auto; padding: 6px 10px 24px; flex: 1; }
+
+  .pivot-row {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 12px; margin-bottom: 7px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .pivot-tags {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  }
+  .pivot-tag { display: flex; flex-direction: column; gap: 0; }
+  .pivot-tag-label { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing:.04em; }
+  .pivot-tag-val   { font-size: 13px; font-weight: 700; color: var(--text); }
+  .pivot-divider   { width:1px; height:28px; background:var(--border); flex-shrink:0; }
+
+  .pivot-nums {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    padding-top: 6px; border-top: 1px solid var(--border-light);
+  }
+  /* 整数・小数 共通の基数ブロック */
+  .pivot-kisu-block {
+    display: flex; align-items: baseline; gap: 2px;
+    background: var(--accent-light); border: 1px solid #bfdbfe;
+    border-radius: 7px; padding: 3px 9px;
+  }
+  .pivot-kisu-block.frac {
+    background: #fff7ed; border-color: #fed7aa;
+  }
+  .pivot-kisu-val  { font-size: 18px; font-weight: 800; color: var(--accent); line-height: 1.1; }
+  .pivot-kisu-unit { font-size: 11px; color: var(--text-muted); }
+  .pivot-kisu-block.frac .pivot-kisu-val  { color: #c2410c; }
+  .pivot-kisu-times { font-size: 10px; color: #9a3412; margin-left: 2px; font-weight:600; }
+  .pivot-members {
+    margin-left: auto; font-size: 10px; color: var(--text-muted); font-weight:600;
+    white-space: nowrap;
+  }
+
+  .pivot-empty { text-align:center; padding: 32px 16px; color: var(--text-muted); font-size:13px; }
+
+  /* ===== オフラインバナー ===== */
+  #offlineBanner {
+    display: none;
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: var(--text);
+    top: 0; left: 0; right: 0;
+    z-index: 9998;
+    background: #f59e0b;
     color: #fff;
-    padding: 10px 16px;
-    border-radius: var(--radius-sm);
+    padding: 7px 16px;
     font-size: 13px;
-    font-weight: 500;
-    box-shadow: var(--shadow-md);
-    transform: translateY(60px);
-    opacity: 0;
-    transition: all 0.25s;
-    z-index: 300;
+    font-weight: 600;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    letter-spacing: 0.02em;
   }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.success { background: var(--green); }
-
-  /* ===== EMPTY STATE ===== */
-  .empty-state {
-    text-align: center;
-    padding: 48px 20px;
-    color: var(--text-muted);
-  }
-  .empty-state svg { margin-bottom: 12px; opacity: 0.4; }
-  .empty-title { font-size: 15px; font-weight: 600; color: var(--text-mid); }
-  .empty-sub { font-size: 13px; margin-top: 4px; }
-
-  /* ===== RESPONSIVE ===== */
-  @media (max-width: 700px) {
-    .detail-tags { gap: 4px; }
-    .detail-tag { min-width: 60px; padding: 3px 8px; }
-    .tag-value { font-size: 12px; }
-    .accordion-header {
-      grid-template-columns: 28px 1fr 90px 80px 28px;
-    }
-    .acc-total-col:first-of-type { display: none; }
-  }
+  #offlineBanner svg { flex-shrink: 0; }
+  /* バナー表示時はヘッダーを下にずらす */
+  body.offline .app-header { top: 36px; }
+  body.offline .main { padding-top: 12px; }
 </style>
 </head>
 <body>
 
-<!-- ===== APP HEADER ===== -->
+<!-- オフラインバナー -->
+<div id="offlineBanner">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+    <line x1="1" y1="1" x2="23" y2="23"/>
+    <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+    <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+    <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+    <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+    <line x1="12" y1="20" x2="12.01" y2="20"/>
+  </svg>
+  オフラインモード — データはローカルに保存されています
+</div>
+
+<!-- パスワード画面 -->
+<!-- HEADER -->
 <header class="app-header">
   <div class="app-title">出庫<span>管理</span>システム</div>
   <div class="header-actions">
+    <button class="btn btn-secondary" onclick="saveToExcel()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      保存
+    </button>
     <button class="btn btn-secondary" onclick="exportCSV()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       CSV出力
     </button>
     <button class="btn btn-primary" onclick="openImport()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       インポート
     </button>
   </div>
 </header>
 
-<!-- ===== MAIN ===== -->
 <main class="main">
-
   <!-- SORT BAR -->
   <div class="sort-bar">
-    <span class="sort-label">日付で絞込</span>
-    <div id="dateSortBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    <span class="sort-label">日付絞込</span>
+    <div id="dateSortBtns" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
     <div class="sort-divider"></div>
-    <button class="sort-btn" id="sortAsc" onclick="setSortOrder('asc')">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-      昇順
-    </button>
-    <button class="sort-btn" id="sortDesc" onclick="setSortOrder('desc')">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-      降順
-    </button>
+    <span class="sort-label">並び順</span>
+    <button class="sort-btn" id="sortTime" onclick="setSortKey('time')">時刻</button>
+    <button class="sort-btn" id="sortCode" onclick="setSortKey('code')">コード</button>
+    <button class="sort-btn" id="sortName" onclick="setSortKey('name')">五十音</button>
+    <div class="sort-divider"></div>
+    <button class="sort-btn" id="sortAsc"  onclick="setSortOrder('asc')">↑ 昇順</button>
+    <button class="sort-btn" id="sortDesc" onclick="setSortOrder('desc')">↓ 降順</button>
   </div>
 
   <!-- TOOLBAR -->
   <div class="toolbar">
     <div class="search-wrap">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input class="search-input" type="text" id="searchInput" placeholder="組合員名・品種・産地で検索…" oninput="filterRecords()">
     </div>
-    <button class="btn btn-secondary" onclick="toggleAll(true)">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
-      全展開
+    <button class="btn btn-secondary" onclick="toggleAll(true)">全展開</button>
+    <button class="btn btn-secondary" onclick="toggleAll(false)">全折畳</button>
+    <button class="btn btn-secondary" onclick="openSummary()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      集計
     </button>
-    <button class="btn btn-secondary" onclick="toggleAll(false)">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="18 15 12 9 6 15"/></svg>
-      全折畳
+    <button class="btn btn-ghost" onclick="openDeleteModal()" style="color:var(--red);border-color:#fca5a5;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+      削除
     </button>
-    <button class="btn btn-ghost" onclick="clearAll()">クリア</button>
   </div>
 
-  <!-- STATS -->
-  <div class="stats-bar" id="statsBar">
-    <div class="stat-card">
-      <div class="stat-label">組合員数</div>
-      <div class="stat-value blue" id="statMembers">0</div>
-      <div class="stat-sub">人</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">総明細数</div>
-      <div class="stat-value" id="statRows">0</div>
-      <div class="stat-sub">件</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">総基数</div>
-      <div class="stat-value green" id="statBase">0</div>
-      <div class="stat-sub">基</div>
-    </div>
-  </div>
 
-  <!-- ACCORDION LIST -->
+
   <div class="accordion-list" id="accordionList">
     <div class="empty-state">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <div class="empty-title">データがありません</div>
-      <div class="empty-sub">「インポート」ボタンからExcelファイルを読み込んでください</div>
+      <div class="empty-sub">「インポート」ボタンからファイルを読み込んでください</div>
     </div>
   </div>
-
 </main>
 
-<!-- ===== IMPORT MODAL ===== -->
+<!-- IMPORT MODAL -->
 <div class="modal-overlay" id="importModal">
   <div class="modal">
     <div class="modal-title">📂 データインポート</div>
@@ -754,7 +429,7 @@
          ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       <div class="drop-text">クリックまたはドラッグ&ドロップ</div>
-      <div class="drop-sub">.xlsx / .xls ファイルに対応</div>
+      <div class="drop-sub">.xlsx / .xls / .csv ファイルに対応</div>
     </div>
     <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleFile(event)">
     <div class="modal-actions">
@@ -763,320 +438,640 @@
   </div>
 </div>
 
-<!-- ===== TOAST ===== -->
+<!-- SUMMARY DRAWER -->
+<div id="summaryDrawer">
+  <div class="drawer-backdrop" onclick="closeSummary()"></div>
+  <div class="drawer-panel">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        基数集計
+      </div>
+      <button class="drawer-close" onclick="closeSummary()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="drawer-filters" id="summaryFilters"></div>
+    <div class="drawer-summary-header">
+      <div class="drawer-total-badge" id="summaryTotalBadge"></div>
+    </div>
+    <div class="drawer-body" id="summaryBody"></div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="del-modal-overlay" id="deleteModal">
+  <div class="del-modal">
+    <div class="del-modal-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+      データ削除
+    </div>
+    <div class="del-modal-sub">削除したデータは元に戻せません</div>
+    <div class="del-options" id="delOptions"></div>
+    <button class="del-modal-cancel" onclick="closeDeleteModal()">キャンセル</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // ===== STATE =====
-let allData = [];
-let groups = {};
-let sortOrder = 'asc';       // 'asc' | 'desc'
-let activeDates = new Set(); // 絞込中の日付（空=全表示）
+let allData       = [];
+let groups        = {};
+let doneGroups    = new Set();
+let priorityGroups = new Set();   // 優先グループ
+let sortOrder     = 'asc';
+let sortKey       = 'time';       // 'time' | 'code' | 'name'
+let activeDates   = new Set();
+const importedIds = new Set();
+// コードメモをメモリ上でも管理（DOM再生成でも消えない）
+let codeMemoCache = {};   // key: "group__row__idx" → value: string
 
-// ===== SAMPLE DATA (サンプル) =====
-const sampleData = [
-  { 日付:'2026-03-30', 原採種コード:1, 原採種:'原種', 産地コード:1, 産地:'栃木', 品種コード:1, 品種:'とちおとめ', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:123456, 組合員:'中村　剛也', 基数:3, 重量:600, 車番:'00-60' },
-  { 日付:'2026-03-30', 原採種コード:1, 原採種:'原種', 産地コード:2, 産地:'福岡', 品種コード:2, 品種:'あまおう', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:123456, 組合員:'中村　剛也', 基数:2, 重量:400, 車番:'00-60' },
-  { 日付:'2026-03-30', 原採種コード:2, 原採種:'採種', 産地コード:2, 産地:'福岡', 品種コード:2, 品種:'あまおう', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:123456, 組合員:'中村　剛也', 基数:3.5, 重量:700, 車番:'00-60' },
-  { 日付:'2026-03-30', 原採種コード:1, 原採種:'原種', 産地コード:1, 産地:'栃木', 品種コード:1, 品種:'とちおとめ', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:235698, 組合員:'栗山　巧', 基数:2, 重量:400, 車番:'00-01' },
-  { 日付:'2026-03-30', 原採種コード:1, 原採種:'原種', 産地コード:2, 産地:'福岡', 品種コード:2, 品種:'あまおう', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:235698, 組合員:'栗山　巧', 基数:1, 重量:200, 車番:'00-01' },
-  { 日付:'2026-03-30', 原採種コード:2, 原採種:'採種', 産地コード:2, 産地:'福岡', 品種コード:2, 品種:'あまおう', 規格コード:1, 規格:'S', 荷姿コード:1, 荷姿:'トレー', 組合員コード:235698, 組合員:'栗山　巧', 基数:1.2, 重量:240, 車番:'00-01' },
-];
+// ===== INDEXEDDB =====
+// ===== IndexedDB =====
+const DB_NAME    = 'shutsukoApp';
+const DB_VERSION = 1;
+const STORE      = 'appState';
+let db = null;
 
-// ===== INIT =====
-window.onload = () => {
-  const saved = restoreFromStorage();
-  if (!saved) loadData(sampleData);
-};
-
-// ===== AUTOSAVE =====
-const STORAGE_KEY_DATA  = 'shutsuko_allData';
-const STORAGE_KEY_CODES = 'shutsuko_codeMemo';
-
-function saveToStorage() {
-  try {
-    localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(allData));
-    // コードメモを収集して保存
-    const codes = {};
-    document.querySelectorAll('.code-input').forEach(el => {
-      const key = `${el.dataset.group}_${el.dataset.row}_${el.dataset.idx}`;
-      codes[key] = el.value;
-    });
-    localStorage.setItem(STORAGE_KEY_CODES, JSON.stringify(codes));
-  } catch(e) { /* localStorage使用不可環境では無視 */ }
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => { e.target.result.createObjectStore(STORE); };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror   = () => reject(req.error);
+  });
+}
+function dbSet(key, value) {
+  return new Promise((resolve, reject) => {
+    if (!db) { resolve(); return; }
+    const tx  = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).put(value, key);
+    req.onsuccess = () => resolve();
+    req.onerror   = () => reject(req.error);
+  });
+}
+function dbGet(key) {
+  return new Promise((resolve, reject) => {
+    if (!db) { resolve(null); return; }
+    const tx  = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).get(key);
+    req.onsuccess = () => resolve(req.result ?? null);
+    req.onerror   = () => reject(req.error);
+  });
+}
+function dbDelete(key) {
+  return new Promise((resolve) => {
+    if (!db) { resolve(); return; }
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(key);
+    tx.oncomplete = () => resolve();
+  });
 }
 
-function restoreFromStorage() {
+// ===== OPFS (Origin Private File System) =====
+// iOSの7日削除がない永続ストレージ
+const OPFS_FILE = 'shutsuko_data.json';
+let opfsSupported = false;
+
+async function opfsInit() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_DATA);
-    if (!raw) return false;
-    const rows = JSON.parse(raw);
+    if (!navigator.storage || !navigator.storage.getDirectory) return;
+    await navigator.storage.getDirectory();
+    opfsSupported = true;
+  } catch(e) { opfsSupported = false; }
+}
+
+async function opfsSave(payload) {
+  if (!opfsSupported) return;
+  try {
+    const root   = await navigator.storage.getDirectory();
+    const fh     = await root.getFileHandle(OPFS_FILE, { create: true });
+    const writable = await fh.createWritable();
+    await writable.write(JSON.stringify(payload));
+    await writable.close();
+  } catch(e) { console.warn('OPFS save error:', e); }
+}
+
+async function opfsLoad() {
+  if (!opfsSupported) return null;
+  try {
+    const root = await navigator.storage.getDirectory();
+    const fh   = await root.getFileHandle(OPFS_FILE);
+    const file = await fh.getFile();
+    const text = await file.text();
+    return JSON.parse(text);
+  } catch(e) { return null; }
+}
+
+async function opfsClear() {
+  if (!opfsSupported) return;
+  try {
+    const root = await navigator.storage.getDirectory();
+    await root.removeEntry(OPFS_FILE);
+  } catch(e) {}
+}
+
+// ===== 統合保存・復元 =====
+// 保存データを1つのオブジェクトにまとめる
+function buildPayload() {
+  document.querySelectorAll('.code-input').forEach(el => {
+    const k = `${el.dataset.group}__${el.dataset.row}__${el.dataset.idx}`;
+    if (el.value) codeMemoCache[k] = el.value;
+    else delete codeMemoCache[k];
+  });
+  return {
+    allData,
+    doneGroups:     [...doneGroups],
+    priorityGroups: [...priorityGroups],
+    importedIds:    [...importedIds],
+    codeMemo:       codeMemoCache,
+    savedAt:        Date.now(),
+  };
+}
+
+async function saveToStorage() {
+  try {
+    const payload = buildPayload();
+    // IndexedDB と OPFS に並行保存
+    await Promise.all([
+      dbSet('allData',        payload.allData),
+      dbSet('doneGroups',     payload.doneGroups),
+      dbSet('priorityGroups', payload.priorityGroups),
+      dbSet('importedIds',    payload.importedIds),
+      dbSet('codeMemo',       payload.codeMemo),
+      opfsSave(payload),
+    ]);
+  } catch(e) { console.warn('saveToStorage error:', e); }
+}
+
+async function restoreFromStorage() {
+  try {
+    // まず IndexedDB から試みる
+    let rows = await dbGet('allData');
+    let source = 'idb';
+
+    // IndexedDBが空 or 失敗なら OPFS から復元
+    if (!rows || rows.length === 0) {
+      const opfsData = await opfsLoad();
+      if (opfsData && opfsData.allData && opfsData.allData.length > 0) {
+        rows = opfsData.allData;
+        source = 'opfs';
+        // OPFSから復元した場合はIndexedDBにも書き戻す
+        await dbSet('allData',        opfsData.allData);
+        await dbSet('doneGroups',     opfsData.doneGroups     || []);
+        await dbSet('priorityGroups', opfsData.priorityGroups || []);
+        await dbSet('importedIds',    opfsData.importedIds    || []);
+        await dbSet('codeMemo',       opfsData.codeMemo       || {});
+      }
+    }
+
     if (!rows || rows.length === 0) return false;
     allData = rows;
-    buildGroups();
-    renderAll();
-    updateStats(allData);
-    updateSortBar();
-    // コードメモを復元
-    const codesRaw = localStorage.getItem(STORAGE_KEY_CODES);
-    if (codesRaw) {
-      const codes = JSON.parse(codesRaw);
-      Object.entries(codes).forEach(([key, val]) => {
-        const [group, row, idx] = key.split('_');
-        const el = document.querySelector(
-          `.code-input[data-group="${group}"][data-row="${row}"][data-idx="${idx}"]`
-        );
-        if (el && val) {
-          el.value = val;
-          el.classList.add('filled');
-        }
-      });
+
+    // OPFSから復元した場合はすでにopfsDataを持っているので再読込しない
+    let ids, done, prio, codes;
+    if (source === 'opfs') {
+      const opfsData = await opfsLoad();
+      ids   = opfsData?.importedIds    || [];
+      done  = opfsData?.doneGroups     || [];
+      prio  = opfsData?.priorityGroups || [];
+      codes = opfsData?.codeMemo       || {};
+    } else {
+      ids   = await dbGet('importedIds')    || [];
+      done  = await dbGet('doneGroups')     || [];
+      prio  = await dbGet('priorityGroups') || [];
+      codes = await dbGet('codeMemo')       || {};
+    }
+
+    ids.forEach(id => importedIds.add(id));
+    done.forEach(k  => doneGroups.add(k));
+    prio.forEach(k  => priorityGroups.add(k));
+
+    buildGroups(); renderAll(); updateStats(allData); updateSortBar();
+    if (codes && Object.keys(codes).length > 0) {
+      codeMemoCache = codes;
+      applyCodeMemoCache();
     }
     showToast('前回のデータを復元しました', 'success');
     return true;
-  } catch(e) { return false; }
+  } catch(e) { console.warn('restoreFromStorage error:', e); return false; }
+}
+
+async function clearStorage() {
+  try {
+    await Promise.all([
+      dbDelete('allData'),
+      dbDelete('doneGroups'),
+      dbDelete('priorityGroups'),
+      dbDelete('importedIds'),
+      dbDelete('codeMemo'),
+      opfsClear(),
+    ]);
+  } catch(e) {}
+}
+
+// コードメモキャッシュをDOMに反映（renderAll後に毎回呼ぶ）
+function applyCodeMemoCache() {
+  if (!codeMemoCache || Object.keys(codeMemoCache).length === 0) return;
+  const inputByKey = {};
+  document.querySelectorAll('.code-input').forEach(el => {
+    const k = `${el.dataset.group}__${el.dataset.row}__${el.dataset.idx}`;
+    inputByKey[k] = el;
+  });
+  Object.entries(codeMemoCache).forEach(([k, val]) => {
+    const el = inputByKey[k];
+    if (el && val) { el.value = val; el.classList.add('filled'); }
+  });
+  // 残基数バッジとヘッダー時刻を更新
+  Object.keys(groups).forEach(gk => {
+    updateRemainingBase(gk);
+    updateHeaderTime(gk);
+  });
+}
+
+// ===== INIT =====
+window.onload = () => { initApp(); };
+async function initApp() {
+  await Promise.all([openDB(), opfsInit()]);
+  const restored = await restoreFromStorage();
+  if (!restored) renderAll();
 }
 
 // ===== IMPORT =====
-function openImport() {
-  document.getElementById('importModal').classList.add('open');
-}
-function closeImport() {
-  document.getElementById('importModal').classList.remove('open');
-}
+function openImport()  { document.getElementById('importModal').classList.add('open'); }
+function closeImport() { document.getElementById('importModal').classList.remove('open'); }
+function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag-over'); }
+function onDragLeave() { document.getElementById('dropZone').classList.remove('drag-over'); }
+function onDrop(e)     { e.preventDefault(); onDragLeave(); const f = e.dataTransfer.files[0]; if(f) readFile(f); }
+function handleFile(e) { const f = e.target.files[0]; if(f) readFile(f); }
 
-function onDragOver(e) {
-  e.preventDefault();
-  document.getElementById('dropZone').classList.add('drag-over');
-}
-function onDragLeave(e) {
-  document.getElementById('dropZone').classList.remove('drag-over');
-}
-function onDrop(e) {
-  e.preventDefault();
-  document.getElementById('dropZone').classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file) readExcel(file);
-}
-function handleFile(e) {
-  const file = e.target.files[0];
-  if (file) readExcel(file);
-}
-
-function readExcel(file) {
+function readFile(file) {
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = ev => {
     try {
-      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      // 列名マッピング（Excel列名→アプリ内キー）
-      const mapped = rows.map(r => ({
-        日付: formatDate(r['日付'] || r['date'] || ''),
-        原採種コード: r['原採種コード'] || 0,
-        原採種: r['原採種'] || '',
-        産地コード: r['産地コード'] || 0,
-        産地: r['産地'] || '',
-        品種コード: r['品種コード'] || 0,
-        品種: r['品種'] || '',
-        規格コード: r['規格コード'] || 0,
-        規格: r['規格'] || '',
-        荷姿コード: r['荷姿コード'] || 0,
-        荷姿: r['荷姿'] || '',
-        組合員コード: r['組合員コード'] || 0,
-        組合員: r['組合員'] || '',
-        基数: parseFloat(r['基数'] || 0),
-        重量: parseFloat(r['重量'] || 0),
-        車番: r['車番'] || '',
-      }));
-      loadData(mapped, true); // 追記モード
-      closeImport();
-      saveToStorage();
-      showToast(`${mapped.length}件を追記しました`, 'success');
-    } catch(err) {
-      showToast('ファイルの読み込みに失敗しました');
-    }
+      const wb   = XLSX.read(ev.target.result, { type:'array', cellDates:true });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+      let added = 0, skipped = 0;
+      const mapped = [];
+      // コードメモ列を検出（「コードメモ1」「コードメモ2」…）
+      const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+      const codeMemoHeaders = headers.filter(h => /^コードメモ\d+$/.test(h))
+        .sort((a,b) => parseInt(a.replace('コードメモ','')) - parseInt(b.replace('コードメモ','')));
+
+      rows.forEach(r => {
+        const id = r['出庫整理番号'];
+        const idStr = String(id);
+        if (id !== '' && id !== undefined && importedIds.has(idStr)) { skipped++; return; }
+        if (id !== '' && id !== undefined) importedIds.add(idStr);
+        // コードメモ列を配列で収集（空白は除く）
+        const memos = codeMemoHeaders.map(h => String(r[h] ?? '').trim());
+        mapped.push({
+          出庫整理番号: id || '',
+          日付:         formatDate(r['日付'] || ''),
+          原採種コード: Number(r['原採種コード']) || 0,
+          原採種:       r['原採種'] || '',
+          産地コード:   Number(r['産地コード']) || 0,
+          産地:         r['産地'] || '',
+          品種コード:   Number(r['品種コード']) || 0,
+          品種:         r['品種'] || '',
+          規格コード:   Number(r['規格コード']) || 0,
+          規格:         r['規格'] || '',
+          荷姿コード:   Number(r['荷姿コード']) || 0,
+          荷姿:         r['荷姿'] || '',
+          組合員コード: Number(r['組合員コード']) || 0,
+          組合員:       r['組合員'] || '',
+          基数:         parseFloat(r['基数']) || 0,
+          重量:         parseFloat(r['重量']) || 0,
+          車番:         r['車番'] || '',
+          出庫予定時間: formatTime(r['出庫予定時間']),
+          _importedMemos: memos,
+        });
+        added++;
+      });
+      allData = [...allData, ...mapped];
+      buildGroups(); renderAll(); updateStats(allData); updateSortBar();
+
+      // render後にコードメモをDOMへ反映
+      applyImportedMemos(mapped);
+
+      saveToStorage(); closeImport();
+      let msg = `${added}件を追記`;
+      if (skipped > 0) msg += `（重複${skipped}件スキップ）`;
+      const memoCount = mapped.filter(r => r._importedMemos && r._importedMemos.some(v => v !== '')).length;
+      if (memoCount > 0) msg += `・コードメモ${memoCount}行を自動入力`;
+      showToast(msg, 'success');
+    } catch(err) { showToast('読み込みに失敗しました'); }
   };
   reader.readAsArrayBuffer(file);
 }
 
+// インポートされたコードメモをDOMに反映する
+function applyImportedMemos(importedRows) {
+  // rowオブジェクト → {groupKey, rowIndex} の逆引きマップを構築
+  const rowInfoMap = new Map();
+  Object.keys(groups).forEach(gk => {
+    groups[gk].rows.forEach((row, ri) => {
+      rowInfoMap.set(row, { gk, ri });
+    });
+  });
+
+  // 全code-inputをキー文字列でマップ化
+  const inputByKey = {};
+  document.querySelectorAll('.code-input').forEach(el => {
+    const k = `${el.dataset.group}__${el.dataset.row}__${el.dataset.idx}`;
+    inputByKey[k] = el;
+  });
+
+  const affectedGroups = new Set();
+  importedRows.forEach(row => {
+    if (!row._importedMemos || !row._importedMemos.some(v => v !== '')) return;
+    const info = rowInfoMap.get(row);
+    if (!info) return;
+    row._importedMemos.forEach((memo, n) => {
+      if (memo === '') return;
+      const k = `${info.gk}__${info.ri}__${n}`;
+      const el = inputByKey[k];
+      if (el && !el.value) {
+        el.value = memo;
+        el.classList.add('filled');
+        affectedGroups.add(info.gk);
+      }
+    });
+  });
+  // 影響を受けたグループの自動出庫終了チェック
+  affectedGroups.forEach(gk => checkAutoDone(gk));
+  // インポートしたコードメモをキャッシュにも反映
+  document.querySelectorAll('.code-input').forEach(el => {
+    const k = `${el.dataset.group}__${el.dataset.row}__${el.dataset.idx}`;
+    if (el.value) codeMemoCache[k] = el.value;
+  });
+}
+
 function formatDate(v) {
   if (!v) return '';
-  if (v instanceof Date) {
-    return v.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' });
-  }
+  if (v instanceof Date) return v.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'});
   return String(v).split('T')[0];
 }
-
-// ===== LOAD DATA （追記モード） =====
-function loadData(rows, append = false) {
-  if (append) {
-    allData = [...allData, ...rows];
-  } else {
-    allData = rows;
+function formatTime(v) {
+  if (v === '' || v === null || v === undefined) return '';
+  if (typeof v === 'string' && v.includes(':')) return v.slice(0,5);
+  if (v instanceof Date) return v.toTimeString().slice(0,5);
+  if (typeof v === 'number') {
+    const m = Math.round(v * 1440);
+    return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
   }
-  buildGroups();
-  renderAll();
-  updateStats(allData);
-  updateSortBar();
+  return String(v);
 }
 
+// ===== GROUPS =====
 function buildGroups() {
   groups = {};
   allData.forEach(r => {
-    // 組合員コード＋日付でグループキーを作る（追記時に日付違いを別グループに）
-    const key = `${r.組合員コード}_${r.日付}`;
-    if (!groups[key]) groups[key] = { meta: r, rows: [] };
+    const key = `${r.組合員コード}__${r.日付}`;
+    if (!groups[key]) groups[key] = { meta:r, rows:[] };
     groups[key].rows.push(r);
   });
 }
 
+function earliestTime(group) {
+  const times = group.rows.map(r => r.出庫予定時間).filter(Boolean);
+  return times.length ? times.sort()[0] : '99:99';
+}
+
+// 未完了明細（コードメモが埋まっていない）の中で最も早い出庫予定時間を返す
+function earliestRemainingTime(groupKey) {
+  const g = groups[groupKey];
+  if (!g) return '99:99';
+  const times = g.rows
+    .filter((r, ri) => {
+      // その行のコードメモが全て埋まっていれば出庫済みとみなす
+      const cnt = Math.ceil(r.基数 || 0);
+      if (cnt === 0) return false;
+      for (let n = 0; n < cnt; n++) {
+        const k = `${groupKey}__${ri}__${n}`;
+        if (!codeMemoCache[k]) return true; // 未入力あり＝未完了
+      }
+      return false; // 全入力済み＝完了
+    })
+    .map(r => r.出庫予定時間)
+    .filter(Boolean);
+  return times.length ? times.sort()[0] : '99:99';
+}
+
+// アコーディオンヘッダーの出庫予定時間表示をDOMで更新
+function updateHeaderTime(groupKey) {
+  const sid = safeId(groupKey);
+  const item = document.getElementById(`group-${sid}`);
+  if (!item) return;
+  const timeVal = item.querySelector('.acc-time-val');
+  if (!timeVal) return;
+  const t = earliestRemainingTime(groupKey);
+  timeVal.textContent = (t === '99:99') ? '—' : t;
+}
+
+// ===== SORT BAR =====
 function updateSortBar() {
-  // 日付一覧を収集してボタン生成
-  const dates = [...new Set(allData.map(r => r.日付))].sort();
-  const container = document.getElementById('dateSortBtns');
-  if (!container) return;
-  if (dates.length === 0) { container.innerHTML = ''; return; }
-
-  container.innerHTML = dates.map(d => `
-    <button class="sort-btn ${activeDates.has(d) ? 'active' : ''}"
-      onclick="toggleDateFilter('${d}')">${d}</button>
-  `).join('');
-
-  // 昇順・降順ボタンの状態反映
-  document.getElementById('sortAsc').classList.toggle('active', sortOrder === 'asc');
-  document.getElementById('sortDesc').classList.toggle('active', sortOrder === 'desc');
+  const dates = [...new Set(allData.map(r => r.日付))].filter(Boolean).sort();
+  const c = document.getElementById('dateSortBtns');
+  if (c) c.innerHTML = dates.map(d =>
+    `<button class="sort-btn ${activeDates.has(d)?'active':''}" onclick="toggleDateFilter('${d}')">${d}</button>`
+  ).join('');
+  document.getElementById('sortAsc').classList.toggle('active',  sortOrder==='asc');
+  document.getElementById('sortDesc').classList.toggle('active', sortOrder==='desc');
+  document.getElementById('sortTime').classList.toggle('active', sortKey==='time');
+  document.getElementById('sortCode').classList.toggle('active', sortKey==='code');
+  document.getElementById('sortName').classList.toggle('active', sortKey==='name');
+}
+function setSortOrder(o) { sortOrder = o; updateSortBar(); renderAll(); }
+function setSortKey(k)   { sortKey   = k; updateSortBar(); renderAll(); }
+function toggleDateFilter(d) {
+  activeDates.has(d) ? activeDates.delete(d) : activeDates.add(d);
+  updateSortBar(); renderAll();
 }
 
 // ===== RENDER =====
-function renderAll(filterText='') {
+function renderAll(filterText) {
   const list = document.getElementById('accordionList');
-  const q = (filterText || document.getElementById('searchInput')?.value || '').toLowerCase();
+  const q = (filterText !== undefined ? filterText : (document.getElementById('searchInput')?.value || '')).toLowerCase();
 
   let keys = Object.keys(groups).filter(k => {
     const g = groups[k];
-    // 日付フィルター
     if (activeDates.size > 0 && !activeDates.has(g.meta.日付)) return false;
-    // テキスト検索
     if (!q) return true;
-    const match = str => String(str).toLowerCase().includes(q);
-    return match(g.meta.組合員) || g.rows.some(r => match(r.品種) || match(r.産地) || match(r.原採種));
+    const m = s => String(s).toLowerCase().includes(q);
+    return m(g.meta.組合員) || g.rows.some(r => m(r.品種)||m(r.産地)||m(r.原採種));
   });
 
-  // 日付ソート
-  keys.sort((a, b) => {
-    const da = groups[a].meta.日付 || '';
-    const db = groups[b].meta.日付 || '';
-    return sortOrder === 'asc' ? da.localeCompare(db) : db.localeCompare(da);
+  const sortKeys = arr => arr.sort((a,b) => {
+    let ta, tb;
+    if (sortKey === 'code') {
+      ta = groups[a].meta.組合員コード; tb = groups[b].meta.組合員コード;
+      return sortOrder==='asc' ? ta - tb : tb - ta;
+    } else if (sortKey === 'name') {
+      ta = groups[a].meta.組合員; tb = groups[b].meta.組合員;
+      return sortOrder==='asc' ? ta.localeCompare(tb,'ja') : tb.localeCompare(ta,'ja');
+    } else {
+      ta = earliestTime(groups[a]); tb = earliestTime(groups[b]);
+      return sortOrder==='asc' ? ta.localeCompare(tb) : tb.localeCompare(ta);
+    }
   });
+  // 優先グループを最上位に、完了グループを最下位に
+  const priority = keys.filter(k =>  priorityGroups.has(k) && !doneGroups.has(k));
+  const active   = keys.filter(k => !priorityGroups.has(k) && !doneGroups.has(k));
+  const done     = keys.filter(k =>  doneGroups.has(k));
+  sortKeys(priority); sortKeys(active); sortKeys(done);
+  keys = [...priority, ...active, ...done];
 
   if (keys.length === 0) {
     list.innerHTML = `<div class="empty-state">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <div class="empty-title">${q || activeDates.size > 0 ? '該当データなし' : 'データがありません'}</div>
-      <div class="empty-sub">${q || activeDates.size > 0 ? '条件を変更してください' : '「インポート」ボタンからファイルを読み込んでください'}</div>
+      <div class="empty-title">${q||activeDates.size>0?'該当データなし':'データがありません'}</div>
+      <div class="empty-sub">${q||activeDates.size>0?'条件を変更してください':'「インポート」ボタンからファイルを読み込んでください'}</div>
     </div>`;
+    updateStats([]);
     return;
   }
-
   list.innerHTML = keys.map(k => renderGroup(k, groups[k])).join('');
+  // 表示中の行でstatsを更新
+  const visibleRows = keys.flatMap(k => groups[k].rows);
+  updateStats(visibleRows);
+  // 再描画後にコードメモキャッシュをDOMへ反映（ソート変更等でも消えない）
+  applyCodeMemoCache();
 }
 
-function renderGroup(key, group) {
-  const rows = group.rows;
-  const meta = group.meta;
-  const totalBase = rows.reduce((s, r) => s + (r.基数 || 0), 0);
-  const totalWeight = rows.reduce((s, r) => s + (r.重量 || 0), 0);
+// グループの残基数（合計基数 - 入力済みコード数）を更新
+function updateRemainingBase(groupKey) {
+  const sid = safeId(groupKey);
+  const baseEl = document.getElementById(`base-${sid}`);
+  if (!baseEl) return;
+  const g = groups[groupKey];
+  if (!g) return;
+  const total = g.rows.reduce((s,r) => s + Math.ceil(r.基数||0), 0);
+  const filled = document.querySelectorAll(`.code-input[data-group="${CSS.escape(groupKey)}"].filled`).length;
+  const remain = total - filled;
+  const valEl = baseEl.querySelector('.acc-base-val');
+  if (valEl) {
+    valEl.textContent = remain;
+    valEl.style.color = remain === 0 ? 'var(--green)' : (remain < total ? '#f59e0b' : 'var(--text)');
+  }
+}
 
-  const detailRows = rows.map((r, i) => {
-    const inputCount = Math.ceil(r.基数);
-    const inputs = Array.from({length: inputCount}, (_, n) => `
+function safeId(key) { return key.replace(/[^a-zA-Z0-9_-]/g, '_'); }
+
+function renderGroup(key, group) {
+  const rows      = group.rows;
+  const meta      = group.meta;
+  // 合計基数 = 各行の基数を切り上げして合計
+  const totalBase = rows.reduce((s,r) => s + Math.ceil(r.基数||0), 0);
+  const isDone    = doneGroups.has(key);
+  const earliest  = earliestTime(group);
+
+  // 明細を出庫予定時間の早い順にソート（data-rowは元のインデックスを保持）
+  const indexedRows = rows.map((r, i) => ({ r, i }));
+  indexedRows.sort((a, b) => {
+    const ta = a.r.出庫予定時間 || '99:99';
+    const tb = b.r.出庫予定時間 || '99:99';
+    return ta.localeCompare(tb);
+  });
+
+  const detailRows = indexedRows.map(({ r, i }) => {
+    const rawKisu = r.基数;
+    const cnt = Math.ceil(rawKisu);
+    const fraction = parseFloat((rawKisu % 1).toPrecision(4));  // 小数部分
+    const inputs = Array.from({length:cnt}, (_,n) => {
+      // 最後のセルが小数端数の場合はその値をラベルに使う
+      const isLastFrac = (n === cnt - 1) && fraction > 0.001;
+      const label = isLastFrac ? parseFloat(fraction.toPrecision(4)) + '基目' : (n+1) + '基目';
+      return `
       <div class="code-input-wrap">
-        <span class="code-input-num">${n + 1}基目</span>
-        <input
-          class="code-input"
-          type="text"
-          placeholder="コード"
-          data-group="${key}"
-          data-row="${i}"
-          data-idx="${n}"
-          oninput="onCodeInput(this)"
-          onkeydown="onCodeKeydown(event, this)"
-        >
-      </div>
-    `).join('');
+        <span class="code-input-num">${label}</span>
+        <input class="code-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="コード"
+          data-group="${key}" data-row="${i}" data-idx="${n}"
+          oninput="onCodeInput(this)" onblur="onCodeBlur(this)" onkeydown="onCodeKeydown(event,this)">
+      </div>`;
+    }).join('');
 
     return `
-    <div class="detail-row" id="row-${key}-${i}">
-      <div class="detail-tags">
-        <div class="detail-tag t-gensaishu">
-          <span class="tag-label">原採種</span>
-          <span class="tag-value">${r.原採種}</span>
-          <span class="tag-code">#${r.原採種コード}</span>
+    <div class="detail-row type-${r.原採種コード}">
+      <div class="detail-top">
+        <div class="detail-center">
+          <div class="detail-tags">
+            <div class="detail-tag">
+              <span class="tag-label">原採種</span>
+              <span class="tag-value">${r.原採種}</span>
+            </div>
+            <div class="detail-tag">
+              <span class="tag-label">産地</span>
+              <span class="tag-value">${r.産地}</span>
+            </div>
+            <div class="detail-tag">
+              <span class="tag-label">品種</span>
+              <span class="tag-value">${r.品種}</span>
+            </div>
+            <div class="detail-tag">
+              <span class="tag-label">規格</span>
+              <span class="tag-value">${r.規格}</span>
+            </div>
+          </div>
+          <div class="detail-kisu">
+            <span class="num-label">基数</span>
+            <span class="num-value">${(() => { const v = r.基数; if (Number.isInteger(v)) return v; const s = parseFloat(v.toPrecision(6)); return s; })()}</span>
+            <span class="num-unit">基</span>
+          </div>
         </div>
-        <div class="detail-tag t-santi">
-          <span class="tag-label">産地</span>
-          <span class="tag-value">${r.産地}</span>
-          <span class="tag-code">#${r.産地コード}</span>
-        </div>
-        <div class="detail-tag t-hinshu">
-          <span class="tag-label">品種</span>
-          <span class="tag-value">${r.品種}</span>
-          <span class="tag-code">#${r.品種コード}</span>
-        </div>
-        <div class="detail-tag t-kikaku">
-          <span class="tag-label">規格</span>
-          <span class="tag-value">${r.規格}</span>
-          <span class="tag-code">#${r.規格コード}</span>
-        </div>
-      </div>
-      <div class="detail-nums">
-        <div class="detail-num-item">
-          <span class="num-label">基数</span>
-          <span class="num-value">${r.基数}</span>
-          <span class="num-unit">基</span>
-        </div>
+        ${r.出庫予定時間 ? `
+        <div class="detail-time-block">
+          <span class="detail-time-label">出庫</span>
+          <span class="detail-time-val">${r.出庫予定時間}</span>
+        </div>` : ''}
       </div>
       <div class="code-inputs-section">
-        <div class="code-inputs-label">コードメモ（基ごと）</div>
         <div class="code-inputs-grid">${inputs}</div>
       </div>
-    </div>
-  `;
+    </div>`;
   }).join('');
 
+  const isPriority = priorityGroups.has(key);
+  const sid = safeId(key);
   return `
-  <div class="accordion-item" id="group-${key}">
-    <div class="accordion-header" onclick="toggleGroup('${key}')">
+  <div class="accordion-item${isDone?' done':''}${isPriority?' priority':''}" id="group-${sid}">
+    <div class="accordion-header" onclick="toggleGroup('${sid}')">
       <div class="acc-toggle">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
       <div class="acc-main">
-        <span class="acc-date">${meta.日付}</span>
-        <span class="acc-member">${meta.組合員}</span>
-        <span class="acc-car">🚚 ${meta.車番} &nbsp;|&nbsp; #${meta.組合員コード}</span>
+        <div style="display:flex;align-items:baseline;gap:6px;min-width:0;overflow:hidden;">
+          <span class="acc-name">${meta.組合員}</span>
+          <span class="acc-car${meta.車番.length > 6 ? ' long' : ''}">${meta.車番}</span>
+        </div>
+        <span class="acc-meta">#${meta.組合員コード} &nbsp;${meta.日付}</span>
       </div>
-      <div>
-        <span class="acc-badge badge-count">${rows.length}件</span>
+      <div class="acc-time">
+        <span class="acc-time-label">出庫予定</span>
+        <span class="acc-time-val">${earliest==='99:99'?'—':earliest}</span>
       </div>
-      <div class="acc-total-col">
-        <div class="acc-total-label">基数</div>
-        <div class="acc-total-val">${totalBase}</div>
+      <div class="acc-base" id="base-${sid}">
+        <span class="acc-base-label">残基数</span>
+        <span class="acc-base-val">${totalBase}</span>
       </div>
-      <div style="color:var(--text-muted)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-      </div>
-      <button class="btn-group-del" title="このグループを削除" onclick="deleteGroup('${key}'); event.stopPropagation()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      <button class="btn-priority" onclick="togglePriority('${key}');event.stopPropagation()">
+        ${isPriority ? '★ 優先中' : '☆ 優先'}
+      </button>
+      <button class="btn-done" onclick="toggleDone('${key}');event.stopPropagation()">
+        ${isDone ? '✓ 終了済' : '出庫終了'}
+      </button>
+      <button class="btn-group-del" onclick="deleteGroup('${key}');event.stopPropagation()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
       </button>
     </div>
     <div class="accordion-body">
-      <div class="detail-list">
-        ${detailRows}
-      </div>
+      <div class="detail-list">${detailRows}</div>
       <div class="detail-footer">
-        <span class="footer-label">合計</span>
+        <span class="footer-label">合計基数</span>
         <div class="footer-item">
           <span class="footer-val">${totalBase}</span>
           <span class="footer-unit">基</span>
@@ -1086,234 +1081,596 @@ function renderGroup(key, group) {
   </div>`;
 }
 
-// ===== TOGGLE =====
-function toggleGroup(key) {
-  const el = document.getElementById(`group-${key}`);
-  el.classList.toggle('open');
+// ===== ACCORDION =====
+function toggleGroup(sid) {
+  const target = document.getElementById(`group-${sid}`);
+  if (!target) return;
+  const isOpen = target.classList.contains('open');
+  // 他のアコーディオンをすべて閉じる
+  document.querySelectorAll('.accordion-item').forEach(el => el.classList.remove('open'));
+  // 元々閉じていた場合だけ開く（開いていた場合はトグルで閉じる）
+  if (!isOpen) target.classList.add('open');
 }
 function toggleAll(open) {
-  document.querySelectorAll('.accordion-item').forEach(el => {
-    el.classList.toggle('open', open);
-  });
+  if (open) {
+    // 全展開は排他制御を外して全部開く
+    document.querySelectorAll('.accordion-item').forEach(el => el.classList.toggle('open', true));
+  } else {
+    document.querySelectorAll('.accordion-item').forEach(el => el.classList.remove('open'));
+  }
 }
 
-// ===== CODE INPUT =====
-function onCodeInput(el) {
-  el.classList.toggle('filled', el.value.trim() !== '');
+// ===== 優先 =====
+function togglePriority(key) {
+  if (priorityGroups.has(key)) {
+    priorityGroups.delete(key);
+  } else {
+    priorityGroups.add(key);
+  }
+  // renderAll前にDOMからキャッシュを最新化してから再描画
+  document.querySelectorAll('.code-input').forEach(el => {
+    const k = `${el.dataset.group}__${el.dataset.row}__${el.dataset.idx}`;
+    if (el.value) codeMemoCache[k] = el.value;
+    else delete codeMemoCache[k];
+  });
+  renderAll();
+  applyCodeMemoCache();  // 再描画後にキャッシュをDOMに戻す
   saveToStorage();
 }
 
-function onCodeKeydown(e, el) {
-  if (e.key !== 'Enter') return;
-  e.preventDefault();
-
-  // 全 .code-input をDOM順で取得し、現在位置の次へフォーカス
-  const allInputs = Array.from(document.querySelectorAll('.code-input'));
-  const idx = allInputs.indexOf(el);
-  if (idx >= 0 && idx < allInputs.length - 1) {
-    // 次の入力欄が属するアコーディオンが閉じていれば開く
-    const next = allInputs[idx + 1];
-    const item = next.closest('.accordion-item');
-    if (item && !item.classList.contains('open')) {
-      item.classList.add('open');
-    }
-    next.focus();
-    next.select();
-  }
-}
-
-// ===== SORT =====
-function setSortOrder(order) {
-  sortOrder = order;
-  updateSortBar();
-  renderAll();
-}
-
-function toggleDateFilter(date) {
-  if (activeDates.has(date)) {
-    activeDates.delete(date);
+// ===== 出庫終了 =====
+function toggleDone(key) {
+  if (doneGroups.has(key)) {
+    doneGroups.delete(key);
+    applyDoneState(key, false);
   } else {
-    activeDates.add(date);
+    doneGroups.add(key);
+    applyDoneState(key, true);
   }
-  updateSortBar();
-  renderAll();
+  saveToStorage();
 }
 
-// ===== DELETE GROUP =====
+// ===== DELETE =====
 function deleteGroup(key) {
   const g = groups[key];
   const label = g ? `${g.meta.組合員}（${g.meta.日付}）` : key;
-  if (!confirm(`「${label}」のデータを削除しますか？`)) return;
-  // allDataから該当行を除外
-  const rowsToRemove = new Set(groups[key].rows);
-  allData = allData.filter(r => !rowsToRemove.has(r));
-  delete groups[key];
-  updateSortBar();
-  renderAll();
-  updateStats(allData);
-  saveToStorage();
+  if (!confirm(`「${label}」を削除しますか？`)) return;
+  const toRemove = new Set(groups[key].rows);
+  allData = allData.filter(r => !toRemove.has(r));
+  delete groups[key]; doneGroups.delete(key);
+  updateSortBar(); renderAll(); updateStats(allData); saveToStorage();
   showToast('削除しました');
 }
 
 // ===== FILTER =====
-function filterRecords() {
-  const q = document.getElementById('searchInput').value;
-  renderAll(q);
+function filterRecords() { renderAll(document.getElementById('searchInput').value); }
+
+// ===== DELETE MODAL =====
+function openDeleteModal() {
+  const dates = [...new Set(allData.map(r => r.日付))].filter(Boolean).sort();
+  const opts = document.getElementById('delOptions');
+
+  let html = '';
+  // 日付ごとの削除オプション
+  dates.forEach(d => {
+    const cnt = allData.filter(r => r.日付 === d).length;
+    const members = new Set(allData.filter(r => r.日付 === d).map(r => r.組合員コード)).size;
+    html += `<div class="del-option" onclick="deleteByDate('${d}')">
+      <div class="del-option-title">📅 ${d} を削除</div>
+      <div class="del-option-desc">${members}名・${cnt}件の明細</div>
+    </div>`;
+  });
+  // 全削除
+  if (allData.length > 0) {
+    html += `<div class="del-option" onclick="deleteAll()" style="border-color:#fca5a5;">
+      <div class="del-option-title" style="color:var(--red);">🗑️ すべて削除</div>
+      <div class="del-option-desc">${new Set(allData.map(r=>r.組合員コード)).size}名・${allData.length}件 全データを削除</div>
+    </div>`;
+  }
+
+  opts.innerHTML = html || '<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:12px;">削除できるデータがありません</div>';
+  document.getElementById('deleteModal').classList.add('open');
 }
 
-// ===== DELETE ROW =====
-function deleteRow(key, idx) {
-  if (!confirm('この明細を削除しますか？')) return;
-  groups[key].rows.splice(idx, 1);
-  if (groups[key].rows.length === 0) delete groups[key];
-  // allData sync
-  allData = Object.values(groups).flatMap(g => g.rows);
-  renderAll(document.getElementById('searchInput').value);
-  updateStats(allData);
-  showToast('削除しました');
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('open');
 }
 
-// ===== CLEAR =====
-function clearAll() {
-  if (!confirm('全データをクリアしますか？')) return;
-  allData = [];
-  groups = {};
-  activeDates = new Set();
-  try {
-    localStorage.removeItem(STORAGE_KEY_DATA);
-    localStorage.removeItem(STORAGE_KEY_CODES);
-  } catch(e) {}
-  updateSortBar();
-  renderAll();
-  updateStats([]);
-  showToast('クリアしました');
+async function deleteByDate(date) {
+  if (!confirm(`${date} のデータを削除しますか？`)) return;
+  closeDeleteModal();
+  // 対象日付のグループキーを特定
+  const removeKeys = Object.keys(groups).filter(k => groups[k].meta.日付 === date);
+  const removeRows = new Set(removeKeys.flatMap(k => groups[k].rows));
+  allData = allData.filter(r => !removeRows.has(r));
+  removeKeys.forEach(k => { delete groups[k]; doneGroups.delete(k); });
+  // importedIdsからも削除
+  allData.forEach(r => { /* 残ったものはそのまま */ });
+  activeDates.delete(date);
+  updateSortBar(); renderAll(); updateStats(allData);
+  await saveToStorage();
+  showToast(`${date} のデータを削除しました`);
 }
 
-// ===== STATS =====
-function updateStats(rows) {
-  const members = new Set(rows.map(r => r.組合員コード)).size;
-  const base = rows.reduce((s, r) => s + (r.基数 || 0), 0);
-  document.getElementById('statMembers').textContent = members;
-  document.getElementById('statRows').textContent = rows.length;
-  document.getElementById('statBase').textContent = base;
+async function deleteAll() {
+  if (!confirm('全データを削除しますか？この操作は元に戻せません。')) return;
+  closeDeleteModal();
+  allData = []; groups = {}; doneGroups = new Set(); activeDates = new Set(); importedIds.clear();
+  await clearStorage();
+  updateSortBar(); renderAll(); updateStats([]);
+  showToast('全データを削除しました');
 }
 
-// ===== CSV出力 =====
-function exportCSV() {
-  if (allData.length === 0) { showToast('出力するデータがありません'); return; }
+// ===== STATS（表示削除済み・呼び出し互換のため残す）=====
+function updateStats(rows) {}
 
-  // インポートデータの列順（A〜P列相当）
-  const baseColumns = [
-    '日付','原採種コード','原採種','産地コード','産地',
-    '品種コード','品種','規格コード','規格','荷姿コード','荷姿',
-    '組合員コード','組合員','基数','重量','車番'
-  ];
+// 検索結果の行を返す（stats連動用）
+function getFilteredRows(filterText) {
+  const q = (filterText !== undefined ? filterText : (document.getElementById('searchInput')?.value || '')).toLowerCase();
+  return allData.filter(r => {
+    const key = `${r.組合員コード}__${r.日付}`;
+    const g = groups[key];
+    if (!g) return false;
+    if (activeDates.size > 0 && !activeDates.has(r.日付)) return false;
+    if (!q) return true;
+    const m = s => String(s).toLowerCase().includes(q);
+    return m(r.組合員) || m(r.品種) || m(r.産地) || m(r.原採種);
+  });
+}
 
-  // コードメモ入力欄を全取得してインデックス化
-  // key: "group-row-idx" → value
+// ===== CODE INPUT =====
+// 自動出庫終了のタイマー管理（グループキーごと）
+const autoDoneTimers = {};
+
+function onCodeInput(el) {
+  const k  = `${el.dataset.group}__${el.dataset.row}__${el.dataset.idx}`;
+  const val = el.value.trim();
+  el.classList.toggle('filled', val !== '');
+  // キャッシュを即時更新（DOM再生成があっても消えない）
+  if (val) codeMemoCache[k] = val;
+  else     delete codeMemoCache[k];
+  saveToStorage();
+  // 入力中は自動出庫終了を保留。blur/Enterで確定する
+  const gk = el.dataset.group;
+  clearTimeout(autoDoneTimers[gk]);
+  // 未入力方向（削除）はすぐ解除チェック
+  if (!checkAutoComplete(gk) && doneGroups.has(gk)) {
+    doneGroups.delete(gk);
+    applyDoneState(gk, false);
+    saveToStorage();
+  }
+  // 残基数バッジとヘッダー時刻を更新
+  updateRemainingBase(gk);
+  updateHeaderTime(gk);
+}
+
+function onCodeBlur(el) {
+  // フォーカスが外れたタイミングで自動出庫終了チェック
+  checkAutoDone(el.dataset.group);
+}
+
+function checkAutoComplete(groupKey) {
+  const inputs = document.querySelectorAll(`.code-input[data-group="${groupKey}"]`);
+  if (inputs.length === 0) return false;
+  return Array.from(inputs).every(el => el.value.trim() !== '');
+}
+
+// DOMを再生成せず、クラスとボタンだけ更新する
+function applyDoneState(groupKey, isDone) {
+  const sid  = safeId(groupKey);
+  const item = document.getElementById(`group-${sid}`);
+  if (!item) return;
+
+  item.classList.toggle('done', isDone);
+  const btn = item.querySelector('.btn-done');
+  if (btn) btn.textContent = isDone ? '✓ 終了済' : '出庫終了';
+
+  const list = document.getElementById('accordionList');
+  if (!list) return;
+
+  if (isDone) {
+    // 終了 → 末尾へ移動（コード欄はそのまま）
+    list.appendChild(item);
+  } else {
+    // 解除 → 出庫予定時間の早い順の正しい位置に挿入
+    // 全アイテムをソート済みキー順に並べ直す
+    const allItems = Array.from(list.querySelectorAll('.accordion-item'));
+
+    // 現在の表示キー一覧（safeId → originalKey の逆引き）
+    const keyBySid = {};
+    Object.keys(groups).forEach(k => { keyBySid[safeId(k)] = k; });
+
+    // active（未終了）とdone（終了済み）に分けてソート
+    const sortByTime = arr => arr.sort((a, b) => {
+      const ta = earliestTime(groups[a] || {rows:[]}),
+            tb = earliestTime(groups[b] || {rows:[]});
+      return sortOrder === 'asc' ? ta.localeCompare(tb) : tb.localeCompare(ta);
+    });
+
+    const activeKeys = Object.keys(groups).filter(k => !doneGroups.has(k));
+    const doneKeys   = Object.keys(groups).filter(k =>  doneGroups.has(k));
+    sortByTime(activeKeys);
+    sortByTime(doneKeys);
+    const orderedKeys = [...activeKeys, ...doneKeys];
+
+    // DOM要素をその順番に並べ直す（appendChild はリスト末尾へ移動）
+    orderedKeys.forEach(k => {
+      const el = document.getElementById(`group-${safeId(k)}`);
+      if (el) list.appendChild(el);
+    });
+  }
+}
+
+function collectCodes() {
+  const map = {};
+  document.querySelectorAll('.code-input').forEach(el => {
+    const k = `${el.dataset.group}__${el.dataset.row}__${el.dataset.idx}`;
+    map[k] = el.value;
+  });
+  return map;
+}
+
+function restoreCodes(map) {
+  const inputByKey = {};
+  document.querySelectorAll('.code-input').forEach(el => {
+    const k = `${el.dataset.group}__${el.dataset.row}__${el.dataset.idx}`;
+    inputByKey[k] = el;
+  });
+  Object.entries(map).forEach(([k, val]) => {
+    const el = inputByKey[k];
+    if (el) { el.value = val; el.classList.toggle('filled', val.trim() !== ''); }
+  });
+}
+
+function checkAutoDone(groupKey) {
+  const allFilled = checkAutoComplete(groupKey);
+  if (allFilled && !doneGroups.has(groupKey)) {
+    doneGroups.add(groupKey);
+    applyDoneState(groupKey, true);
+    saveToStorage();
+    showToast('コードメモが全て入力されました。出庫終了しました', 'success');
+  } else if (!allFilled && doneGroups.has(groupKey)) {
+    doneGroups.delete(groupKey);
+    applyDoneState(groupKey, false);
+    saveToStorage();
+  }
+}
+function onCodeKeydown(e, el) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  // Enter確定時点で自動出庫終了チェック
+  checkAutoDone(el.dataset.group);
+  const all = Array.from(document.querySelectorAll('.code-input'));
+  const idx = all.indexOf(el);
+  if (idx >= 0 && idx < all.length-1) {
+    const next = all[idx+1];
+    const item = next.closest('.accordion-item');
+    if (item && !item.classList.contains('open')) item.classList.add('open');
+    next.focus(); next.select();
+  } else if (idx === all.length - 1) {
+    // 最後の入力欄でEnterを押したらblur
+    el.blur();
+  }
+}
+
+// ===== Excelに保存（コードメモ付き） =====
+function saveToExcel() {
+  if (allData.length === 0) { showToast('保存するデータがありません'); return; }
+
+  // 現在のコードメモをDOMから収集
   const inputMap = {};
   document.querySelectorAll('.code-input').forEach(el => {
-    const g = el.dataset.group;
-    const r = el.dataset.row;
-    const n = el.dataset.idx;
+    const g = el.dataset.group, r = el.dataset.row, n = el.dataset.idx;
     if (!inputMap[g]) inputMap[g] = {};
     if (!inputMap[g][r]) inputMap[g][r] = {};
     inputMap[g][r][n] = el.value.trim();
   });
 
-  // コードメモが1つでも入力されている行のみ出力
-  const outputRows = [];
-
-  Object.keys(groups).forEach(groupKey => {
-    const g = groups[groupKey];
-    g.rows.forEach((row, rowIdx) => {
-      const rowCodes = inputMap[groupKey]?.[rowIdx] || {};
-      const codeValues = Object.values(rowCodes).filter(v => v !== '');
-      if (codeValues.length === 0) return; // 入力なしはスキップ
-
-      // A〜P列のデータ（車番=P列は空欄）
-      const baseValues = baseColumns.map(col => {
-        if (col === '車番') return ''; // P列は空欄
-        const v = row[col];
-        if (v === null || v === undefined) return '';
-        // カンマ・改行・ダブルクォートを含む場合はクォート
-        const s = String(v);
-        if (s.includes(',') || s.includes('\n') || s.includes('"')) {
-          return '"' + s.replace(/"/g, '""') + '"';
-        }
-        return s;
-      });
-
-      // Q列は空欄、R列以降にコードメモ（入力済みのもの全て）
-      const allCodes = Object.keys(rowCodes)
-        .sort((a, b) => Number(a) - Number(b))
-        .map(k => rowCodes[k]);
-
-      const codeFields = allCodes.map(v => {
-        if (v.includes(',') || v.includes('\n') || v.includes('"')) {
-          return '"' + v.replace(/"/g, '""') + '"';
-        }
-        return v;
-      });
-
-      outputRows.push([...baseValues, '', ...codeFields].join(','));
-    });
-  });
-
-  if (outputRows.length === 0) {
-    showToast('コードメモが入力された行がありません');
-    return;
-  }
-
-  // ヘッダー行：A〜P + Q(空) + R列以降はコード1,コード2...
-  // R列以降の最大数を求める
+  // 最大コードメモ数を調べる
   let maxCodes = 0;
-  Object.keys(groups).forEach(groupKey => {
-    const g = groups[groupKey];
-    g.rows.forEach((_, rowIdx) => {
-      const rowCodes = inputMap[groupKey]?.[rowIdx] || {};
-      maxCodes = Math.max(maxCodes, Object.keys(rowCodes).length);
+  Object.keys(groups).forEach(gk => {
+    groups[gk].rows.forEach((_, ri) => {
+      const rc = inputMap[gk]?.[ri] || {};
+      maxCodes = Math.max(maxCodes, Math.ceil(groups[gk].rows[ri].基数 || 0));
     });
   });
-  const codeHeaders = Array.from({length: maxCodes}, (_, i) => `コード${i + 1}`);
-  const headerRow = [...baseColumns, '', ...codeHeaders].join(',');
 
-  const csv = [headerRow, ...outputRows].join('\r\n');
+  // 各行にコードメモを付けてExcel出力
+  const baseColumns = [
+    '出庫整理番号','日付','原採種コード','原採種','産地コード','産地',
+    '品種コード','品種','規格コード','規格','荷姿コード','荷姿',
+    '組合員コード','組合員','基数','重量','車番','出庫予定時間'
+  ];
+  const codeHeaders = Array.from({length: maxCodes}, (_, i) => `コードメモ${i+1}`);
+  const allHeaders  = [...baseColumns, ...codeHeaders];
 
-  // BOM付きUTF-8（Excelで文字化けしないように）
-  const bom = '\uFEFF';
-  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `出庫コードメモ_${new Date().toLocaleDateString('ja-JP').replace(/\//g, '-')}.csv`;
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  showToast(`${outputRows.length}件を出力しました`, 'success');
+  const outputRows = [];
+  Object.keys(groups).forEach(gk => {
+    groups[gk].rows.forEach((row, ri) => {
+      const rc = inputMap[gk]?.[ri] || {};
+      const cnt = Math.ceil(row.基数 || 0);
+      const rowObj = {};
+      baseColumns.forEach(col => { rowObj[col] = row[col] ?? ''; });
+      for (let n = 0; n < maxCodes; n++) {
+        rowObj[`コードメモ${n+1}`] = n < cnt ? (rc[String(n)] || '') : '';
+      }
+      outputRows.push(rowObj);
+    });
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(outputRows, { header: allHeaders });
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  XLSX.writeFile(wb, `出庫データ_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.xlsx`);
+  showToast('Excelに保存しました', 'success');
+}
+
+// ===== CSV出力 =====
+function exportCSV() {
+  if (allData.length === 0) { showToast('出力するデータがありません'); return; }
+  const baseColumns = ['出庫整理番号','日付','原採種コード','原採種','産地コード','産地',
+    '品種コード','品種','規格コード','規格','荷姿コード','荷姿',
+    '組合員コード','組合員','基数','重量','車番','出庫予定時間'];
+
+  const inputMap = {};
+  document.querySelectorAll('.code-input').forEach(el => {
+    const g=el.dataset.group, r=el.dataset.row, n=el.dataset.idx;
+    if (!inputMap[g]) inputMap[g]={};
+    if (!inputMap[g][r]) inputMap[g][r]={};
+    inputMap[g][r][n] = el.value.trim();
+  });
+
+  const escape = v => {
+    const s = String(v ?? '');
+    return s.includes(',')||s.includes('\n')||s.includes('"') ? '"'+s.replace(/"/g,'""')+'"' : s;
+  };
+
+  let maxCodes=0, outputRows=[];
+  Object.keys(groups).forEach(gk => {
+    groups[gk].rows.forEach((row,ri) => {
+      const rc = inputMap[gk]?.[ri] || {};
+      const vals = Object.values(rc).filter(v=>v!=='');
+      if (!vals.length) return;
+      const base = baseColumns.map(col => col==='車番' ? '' : escape(row[col]));
+      const codes = Object.keys(rc).sort((a,b)=>+a-+b).map(k=>escape(rc[k]));
+      maxCodes = Math.max(maxCodes, codes.length);
+      outputRows.push([...base,'', ...codes].join(','));
+    });
+  });
+
+  if (!outputRows.length) { showToast('コードメモが入力された行がありません'); return; }
+  const hdr = [...baseColumns, '', ...Array.from({length:maxCodes},(_,i)=>`コード${i+1}`)].join(',');
+  const csv = [hdr, ...outputRows].join('\r\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download=`出庫コードメモ_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.csv`;
+  a.style.display='none'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showToast(`${outputRows.length}件を出力しました`,'success');
 }
 
 // ===== TOAST =====
 function showToast(msg, type='') {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = 'toast show' + (type ? ` ${type}` : '');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  t.className = 'toast show'+(type?` ${type}`:'');
+  setTimeout(()=>t.classList.remove('show'), 2800);
 }
 
-// ===== KEYBOARD / CLOSE MODAL =====
+// ===== SUMMARY DRAWER =====
+const PIVOT_KEYS = ['原採種', '産地', '品種', '規格'];
+let summaryActiveFilters = new Set(PIVOT_KEYS); // 表示する軸
+
+function openSummary() {
+  if (allData.length === 0) { showToast('データがありません'); return; }
+  summaryActiveFilters = new Set(PIVOT_KEYS);
+  renderSummary();
+  const drawer = document.getElementById('summaryDrawer');
+  drawer.style.display = 'block';
+  requestAnimationFrame(() => drawer.classList.add('open'));
+}
+
+function closeSummary() {
+  const drawer = document.getElementById('summaryDrawer');
+  drawer.classList.remove('open');
+  setTimeout(() => { drawer.style.display = 'none'; }, 290);
+}
+
+function renderSummary() {
+  // 日付フィルター適用済みデータ
+  const data = allData.filter(r => activeDates.size === 0 || activeDates.has(r.日付));
+
+  // フィルターチップ描画
+  const filtersEl = document.getElementById('summaryFilters');
+  filtersEl.innerHTML = PIVOT_KEYS.map(k =>
+    `<button class="filter-chip${summaryActiveFilters.has(k) ? ' active' : ''}"
+      onclick="toggleSummaryFilter('${k}')">${k}</button>`
+  ).join('');
+
+  // アクティブな軸でグループ化キーを構築
+  const activeKeys = PIVOT_KEYS.filter(k => summaryActiveFilters.has(k));
+
+  // DOMからコードメモ入力済み数を行単位で収集
+  // key: "groupKey__rowIdx" → 入力済みコード数
+  const filledMap = {};
+  document.querySelectorAll('.code-input').forEach(el => {
+    const mapKey = `${el.dataset.group}__${el.dataset.row}`;
+    if (!filledMap[mapKey]) filledMap[mapKey] = 0;
+    if (el.classList.contains('filled')) filledMap[mapKey]++;
+  });
+
+  // allDataの各行に対してグループキーとrowIndexを逆引きできるマップを作る
+  const rowInfoMap = new Map();
+  Object.keys(groups).forEach(gk => {
+    groups[gk].rows.forEach((row, ri) => {
+      rowInfoMap.set(row, { gk, ri });
+    });
+  });
+
+  // ピボット集計（残基数ベース）
+  const pivotMap = {};
+  data.forEach(r => {
+    const pivotKey = activeKeys.map(k => r[k] || '—').join('__');
+    if (!pivotMap[pivotKey]) {
+      pivotMap[pivotKey] = { labels: {}, codes: {}, intTotal: 0, fracs: {}, memberSet: new Set() };
+      activeKeys.forEach(k => pivotMap[pivotKey].labels[k] = r[k] || '—');
+      // コード値（ソート用）
+      pivotMap[pivotKey].codes['原採種'] = Number(r['原採種コード']) || 0;
+      pivotMap[pivotKey].codes['産地']   = Number(r['産地コード'])   || 0;
+      pivotMap[pivotKey].codes['品種']   = Number(r['品種コード'])   || 0;
+      pivotMap[pivotKey].codes['規格']   = Number(r['規格コード'])   || 0;
+    }
+    const entry = pivotMap[pivotKey];
+    entry.memberSet.add(r.組合員コード);
+
+    // 残基数 = 基数 - 入力済みコード数（基数を超えないようにclamp）
+    const totalKisu = parseFloat(r.基数) || 0;
+    const info = rowInfoMap.get(r);
+    const filledCount = info ? (filledMap[`${info.gk}__${info.ri}`] || 0) : 0;
+    // 入力済み1件 = 1基分出庫済み（小数基数の端数も最後の1枠で消費）
+    const remainKisu = Math.max(0, totalKisu - filledCount);
+    if (remainKisu <= 0) return; // 全コード済み = 出庫済み
+
+    const intPart  = Math.floor(remainKisu);
+    const fracPart = parseFloat((remainKisu - intPart).toPrecision(4));
+    entry.intTotal += intPart;
+    if (fracPart > 0.0001) {
+      const fracKey = parseFloat(fracPart.toPrecision(4));
+      entry.fracs[fracKey] = (entry.fracs[fracKey] || 0) + 1;
+      // 小数が集まって整数になる分を繰り上げ
+      const total = entry.fracs[fracKey] * fracKey;
+      if (total >= 1 - 0.0001) {
+        const carry = Math.floor(total + 0.0001);
+        entry.intTotal += carry;
+        const rem = parseFloat(((total) % 1).toPrecision(4));
+        if (rem > 0.0001) {
+          entry.fracs[fracKey] = parseFloat((rem / fracKey).toPrecision(4));
+        } else {
+          delete entry.fracs[fracKey];
+        }
+      }
+    }
+  });
+
+  // 残基数ゼロのエントリを除外
+  const rows = Object.values(pivotMap).filter(e => e.intTotal > 0 || Object.keys(e.fracs).length > 0);
+  // 原採種コード昇順 → 産地コード昇順 → 品種コード昇順 → 規格コード昇順
+  rows.sort((a, b) =>
+    (a.codes['原採種'] - b.codes['原採種']) ||
+    (a.codes['産地']   - b.codes['産地'])   ||
+    (a.codes['品種']   - b.codes['品種'])   ||
+    (a.codes['規格']   - b.codes['規格'])
+  );
+
+  // 合計バッジ
+  const grandInt = rows.reduce((s, r) => s + r.intTotal, 0);
+  document.getElementById('summaryTotalBadge').innerHTML =
+    `残 ${rows.length}種類 &nbsp;／&nbsp; 残整数計 <span>${grandInt}基</span>`;
+
+  // 行描画
+  const bodyEl = document.getElementById('summaryBody');
+  if (rows.length === 0) {
+    bodyEl.innerHTML = '<div class="pivot-empty">✅ 全コードメモ入力済みです</div>';
+    return;
+  }
+
+  bodyEl.innerHTML = rows.map(entry => {
+    // タグ部分
+    const tags = activeKeys.map(k => `
+      <div class="pivot-tag">
+        <span class="pivot-tag-label">${k}</span>
+        <span class="pivot-tag-val">${entry.labels[k]}</span>
+      </div>`).join('<div class="pivot-divider"></div>');
+
+    // 整数ブロック（統一スタイル）
+    const intBlock = entry.intTotal > 0
+      ? `<div class="pivot-kisu-block">
+           <span class="pivot-kisu-val">${entry.intTotal}</span>
+           <span class="pivot-kisu-unit">基</span>
+         </div>`
+      : '';
+
+    // 小数ブロック（整数と同じスタイル）
+    const fracBlocks = Object.entries(entry.fracs)
+      .filter(([, cnt]) => cnt > 0)
+      .map(([frac, cnt]) => {
+        const f = parseFloat(frac);
+        const c = Math.round(cnt);
+        return `<div class="pivot-kisu-block frac">
+          <span class="pivot-kisu-val">${f}</span>
+          <span class="pivot-kisu-unit">基</span>
+          <span class="pivot-kisu-times">×${c}</span>
+        </div>`;
+      }).join('');
+
+    return `
+    <div class="pivot-row">
+      <div class="pivot-tags">${tags}</div>
+      <div class="pivot-nums">
+        ${intBlock}${fracBlocks}
+        <div class="pivot-members">${entry.memberSet.size}名</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSummaryFilter(key) {
+  if (summaryActiveFilters.has(key)) {
+    if (summaryActiveFilters.size === 1) return; // 最低1つは残す
+    summaryActiveFilters.delete(key);
+  } else {
+    summaryActiveFilters.add(key);
+  }
+  renderSummary();
+}
+
+// ===== MODAL CLOSE =====
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeImport();
+  if(e.key==='Escape') { closeImport(); closeDeleteModal(); closeSummary(); }
 });
 document.getElementById('importModal').addEventListener('click', e => {
-  if (e.target === e.currentTarget) closeImport();
+  if(e.target===e.currentTarget) closeImport();
+});
+document.getElementById('deleteModal').addEventListener('click', e => {
+  if(e.target===e.currentTarget) closeDeleteModal();
 });
 
-// ===== SERVICE WORKER登録 =====
+// ===== バックグラウンド復帰・ページ離脱時の保存 =====
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    // バックグラウンド移行時（ロック・アプリ切り替え）に即保存
+    saveToStorage();
+  }
+});
+window.addEventListener('pagehide', () => { saveToStorage(); });
+
+// ===== SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      // 新バージョン検知 → トースト通知
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            showToast('アプリを更新しました。再読み込みで反映されます', '');
+          }
+        });
+      });
+    }).catch(() => {});
+
+    // オンライン/オフライン状態バナー
+    const banner = document.getElementById('offlineBanner');
+    function updateOnline() {
+      const isOnline = navigator.onLine;
+      if (banner) banner.style.display = isOnline ? 'none' : 'flex';
+      document.body.classList.toggle('offline', !isOnline);
+    }
+    updateOnline();
+    window.addEventListener('online',  updateOnline);
+    window.addEventListener('offline', updateOnline);
+  });
 }
 </script>
 </body>
