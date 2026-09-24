@@ -1537,19 +1537,8 @@ function renderSummary() {
     entry.intTotal += intPart;
     if (fracPart > 0.0001) {
       const fracKey = parseFloat(fracPart.toPrecision(4));
+      // 繰り上げせずに件数をそのまま保持（0.5×2件は「0.5基×2」と表示）
       entry.fracs[fracKey] = (entry.fracs[fracKey] || 0) + 1;
-      // 小数が集まって整数になる分を繰り上げ
-      const total = entry.fracs[fracKey] * fracKey;
-      if (total >= 1 - 0.0001) {
-        const carry = Math.floor(total + 0.0001);
-        entry.intTotal += carry;
-        const rem = parseFloat(((total) % 1).toPrecision(4));
-        if (rem > 0.0001) {
-          entry.fracs[fracKey] = parseFloat((rem / fracKey).toPrecision(4));
-        } else {
-          delete entry.fracs[fracKey];
-        }
-      }
     }
   });
 
@@ -1637,13 +1626,39 @@ document.getElementById('deleteModal').addEventListener('click', e => {
 });
 
 // ===== バックグラウンド復帰・ページ離脱時の保存 =====
-document.addEventListener('visibilitychange', () => {
+document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState === 'hidden') {
     // バックグラウンド移行時（ロック・アプリ切り替え）に即保存
-    saveToStorage();
+    await saveToStorage();
+  } else if (document.visibilityState === 'visible') {
+    // 復帰時にIndexedDBが空になっていたらOPFSから復元（iPadのメモリ解放対策）
+    if (allData.length > 0) return; // データがあればOK
+    try {
+      const rows = await dbGet('allData');
+      if (!rows || rows.length === 0) {
+        // IndexedDBが消えている → OPFSから復元
+        const opfsData = await opfsLoad();
+        if (opfsData && opfsData.allData && opfsData.allData.length > 0) {
+          allData = opfsData.allData;
+          opfsData.doneGroups     ?.forEach(k => doneGroups.add(k));
+          opfsData.priorityGroups ?.forEach(k => priorityGroups.add(k));
+          opfsData.importedIds    ?.forEach(id => importedIds.add(id));
+          buildGroups(); renderAll(); updateStats(allData); updateSortBar();
+          if (opfsData.codeMemo && Object.keys(opfsData.codeMemo).length > 0) {
+            codeMemoCache = opfsData.codeMemo;
+            applyCodeMemoCache();
+          }
+          // IndexedDBにも書き戻す
+          await saveToStorage();
+          showToast('データを復元しました', 'success');
+        }
+      }
+    } catch(e) { console.warn('visibility restore error:', e); }
   }
 });
 window.addEventListener('pagehide', () => { saveToStorage(); });
+// iPad PWAでページが再ロードされた際の保存漏れ対策
+window.addEventListener('beforeunload', () => { saveToStorage(); });
 
 // ===== SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
