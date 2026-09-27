@@ -1408,39 +1408,84 @@ function saveToExcel() {
 // ===== CSV出力 =====
 function exportCSV() {
   if (allData.length === 0) { showToast('出力するデータがありません'); return; }
-  const baseColumns = ['出庫整理番号','日付','原採種コード','原採種','産地コード','産地',
-    '品種コード','品種','規格コード','規格','荷姿コード','荷姿',
-    '組合員コード','組合員','基数','重量','車番','出庫予定時間'];
 
-  const inputMap = {};
-  document.querySelectorAll('.code-input').forEach(el => {
-    const g=el.dataset.group, r=el.dataset.row, n=el.dataset.idx;
-    if (!inputMap[g]) inputMap[g]={};
-    if (!inputMap[g][r]) inputMap[g][r]={};
-    inputMap[g][r][n] = el.value.trim();
-  });
+  // codeMemoCache からコードメモを取得
+  const getCodesForRow = (gk, ri) => {
+    const result = {};
+    Object.keys(codeMemoCache).forEach(key => {
+      const parts = key.split('__');
+      if (parts[0] === gk && parts[1] === String(ri)) {
+        result[parts[2]] = codeMemoCache[key];
+      }
+    });
+    return result;
+  };
 
   const escape = v => {
     const s = String(v ?? '');
     return s.includes(',')||s.includes('\n')||s.includes('"') ? '"'+s.replace(/"/g,'""')+'"' : s;
   };
 
+  // 列レイアウト:
+  // A(0):出庫整理番号 B(1):日時 C(2):空
+  // D(3):原採種コード E(4):原採種 F(5):品種コード G(6):品種
+  // H(7):産地コード I(8):産地
+  // J(9):組合員コード K(10):組合員名
+  // L(11):規格コード M(12):規格
+  // N(13):荷姿コード O(14):荷姿
+  // P(15):空 Q(16):空
+  // R(17):基数 S(18):重量
+  // T(19):空 U(20):空 V(21):空 W(22):空
+  // X(23)〜:コードメモ
+  const hdrRow = [
+    '出庫整理番号','日時','',
+    '原採種コード','原採種','品種コード','品種',
+    '産地コード','産地',
+    '組合員コード','組合員名',
+    '規格コード','規格',
+    '荷姿コード','荷姿',
+    '','',
+    '基数','重量',
+    '','','',''
+  ];
+
   let maxCodes=0, outputRows=[];
   Object.keys(groups).forEach(gk => {
-    groups[gk].rows.forEach((row,ri) => {
-      const rc = inputMap[gk]?.[ri] || {};
-      const vals = Object.values(rc).filter(v=>v!=='');
+    groups[gk].rows.forEach((row, ri) => {
+      const rc = getCodesForRow(gk, ri);
+      const vals = Object.values(rc).filter(v => v !== '');
       if (!vals.length) return;
-      const base = baseColumns.map(col => col==='車番' ? '' : escape(row[col]));
-      const codes = Object.keys(rc).sort((a,b)=>+a-+b).map(k=>escape(rc[k]));
+      const codes = Object.keys(rc).sort((a,b)=>+a-+b).map(k => escape(rc[k]));
       maxCodes = Math.max(maxCodes, codes.length);
-      outputRows.push([...base,'', ...codes].join(','));
+      const cells = [
+        escape(row['出庫整理番号']),
+        escape(row['日付'] || row['日時'] || ''),
+        '',
+        escape(row['原採種コード']),
+        escape(row['原採種']),
+        escape(row['品種コード']),
+        escape(row['品種']),
+        escape(row['産地コード']),
+        escape(row['産地']),
+        escape(row['組合員コード']),
+        escape(row['組合員']),
+        escape(row['規格コード']),
+        escape(row['規格']),
+        escape(row['荷姿コード']),
+        escape(row['荷姿']),
+        '', '',
+        escape(row['基数']),
+        escape(row['重量']),
+        '', '', '', '',
+        ...codes
+      ];
+      outputRows.push(cells.join(','));
     });
   });
 
   if (!outputRows.length) { showToast('コードメモが入力された行がありません'); return; }
-  const hdr = [...baseColumns, '', ...Array.from({length:maxCodes},(_,i)=>`コード${i+1}`)].join(',');
-  const csv = [hdr, ...outputRows].join('\r\n');
+  const fullHdr = [...hdrRow, ...Array.from({length:maxCodes},(_,i)=>`コード${i+1}`)].join(',');
+  const csv = [fullHdr, ...outputRows].join('\r\n');
   const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
