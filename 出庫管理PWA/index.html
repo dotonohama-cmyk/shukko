@@ -1410,12 +1410,15 @@ function exportCSV() {
   if (allData.length === 0) { showToast('出力するデータがありません'); return; }
 
   // codeMemoCache からコードメモを取得
+  // キー形式: "groupKey__rowIndex__inputIdx"
+  // groupKey自体に"__"が含まれるので、末尾2要素だけ切り出す
   const getCodesForRow = (gk, ri) => {
     const result = {};
+    const prefix = gk + '__' + String(ri) + '__';
     Object.keys(codeMemoCache).forEach(key => {
-      const parts = key.split('__');
-      if (parts[0] === gk && parts[1] === String(ri)) {
-        result[parts[2]] = codeMemoCache[key];
+      if (key.startsWith(prefix)) {
+        const idx = key.slice(prefix.length);
+        result[idx] = codeMemoCache[key];
       }
     });
     return result;
@@ -1438,7 +1441,7 @@ function exportCSV() {
   // T(19):空 U(20):空 V(21):空 W(22):空
   // X(23)〜:コードメモ
   const hdrRow = [
-    '出庫整理番号','日時','',
+    '出庫整理番号','日時',
     '原採種コード','原採種','品種コード','品種',
     '産地コード','産地',
     '組合員コード','組合員名',
@@ -1460,7 +1463,6 @@ function exportCSV() {
       const cells = [
         escape(row['出庫整理番号']),
         escape(row['日付'] || row['日時'] || ''),
-        '',
         escape(row['原採種コード']),
         escape(row['原採種']),
         escape(row['品種コード']),
