@@ -108,6 +108,8 @@
   .acc-car  { font-size:14px; font-weight:700; color:var(--text-mid); white-space:nowrap; flex-shrink:0; }
   /* 車番が長い場合に文字を縮小（JS側でクラス付与） */
   .acc-car.long { font-size:10px; font-weight:600; }
+  /* 車番を名前の下に小さく表示 */
+  .acc-car-sub { font-size:11px; font-weight:500; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .acc-meta { font-size:11px; color:var(--text-muted); }
 
   .acc-time { display:flex; flex-direction:column; align-items:flex-end; flex-shrink:0; }
@@ -1044,9 +1046,9 @@ function renderGroup(key, group) {
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
       <div class="acc-main">
-        <div style="display:flex;align-items:baseline;gap:6px;min-width:0;overflow:hidden;">
+        <div style="display:flex;flex-direction:column;min-width:0;overflow:hidden;">
           <span class="acc-name">${meta.組合員}</span>
-          <span class="acc-car${meta.車番.length > 6 ? ' long' : ''}">${meta.車番}</span>
+          ${meta.車番 ? `<span class="acc-car acc-car-sub">${meta.車番}</span>` : ''}
         </div>
         <span class="acc-meta">#${meta.組合員コード} &nbsp;${meta.日付}</span>
       </div>
@@ -1571,9 +1573,12 @@ function renderSummary() {
     const entry = pivotMap[pivotKey];
     entry.memberSet.add(r.組合員コード);
 
+    // 出庫終了ボタンで終了させたグループは残基数0として除外
+    const info = rowInfoMap.get(r);
+    if (info && doneGroups.has(info.gk)) return;
+
     // 残基数 = 基数 - 入力済みコード数（基数を超えないようにclamp）
     const totalKisu = parseFloat(r.基数) || 0;
-    const info = rowInfoMap.get(r);
     const filledCount = info ? (filledMap[`${info.gk}__${info.ri}`] || 0) : 0;
     // 入力済み1件 = 1基分出庫済み（小数基数の端数も最後の1枠で消費）
     const remainKisu = Math.max(0, totalKisu - filledCount);
