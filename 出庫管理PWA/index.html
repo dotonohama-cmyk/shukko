@@ -1548,33 +1548,56 @@ function onQrDetected(raw) {
   // QR内容例: "1\n02020204" (1行目=整理番号は無視、8桁コードで行特定)
   // または "02020204-MEMOVALUE"
   const lines = raw.trim().split(/[\n\r]+/);
-  let code8 = null, memoVal = null;
+  let code10 = null, memoVal = null;
   for (const line of lines) {
-    const m = line.match(/([0-9]{8})(?:-(.+))?/);
-    if (m) { code8 = m[1]; memoVal = m[2] || null; break; }
+    // 10桁コード + アンダースコアまたはハイフン後がコードメモ
+    const m = line.match(/([0-9]{10})(?:[_-](.+))?/);
+    if (m) { code10 = m[1]; memoVal = m[2] || null; break; }
   }
   // コードが見つからない場合はQR全体をメモ値として使う
-  if (!code8) { memoVal = raw.trim(); }
+  if (!code10) { memoVal = raw.trim(); }
 
-  // 8桁コード: 産地(2桁)+原採種(2桁)+品種(2桁)+規格(2桁)
+  // 10桁コード: 原採種(2桁)+産地(2桁)+品種(2桁)+規格(2桁)+荷姿(2桁)
+  // アンダースコア後の数字はコードメモに自動入力（先頭ゼロは除いて入力）
   const pad2 = n => String(Number(n) || 0).padStart(2, '0');
   const g = groups[qrCurrentGroupKey];
   let matchedRowIdx = null;
-  if (code8 && g) {
+  if (code10 && g) {
     for (let i = 0; i < g.rows.length; i++) {
       const r = g.rows[i];
-      const rowCode = pad2(r.産地コード) + pad2(r.原採種コード) + pad2(r.品種コード) + pad2(r.規格コード);
-      if (rowCode === code8) { matchedRowIdx = i; break; }
+      const rowCode = pad2(r.原採種コード) + pad2(r.産地コード) + pad2(r.品種コード) + pad2(r.規格コード) + pad2(r.荷姿コード);
+      if (rowCode === code10) { matchedRowIdx = i; break; }
     }
   }
 
-  const displayVal = memoVal || code8 || raw;
+  const displayVal = memoVal || code10 || raw;
   let resultMsg = '';
   if (matchedRowIdx !== null) {
     const r = g.rows[matchedRowIdx];
-    resultMsg = `✅ ${r.品種}（${r.産地}）の行が見つかりました\n入力値: ${displayVal}`;
+    // コードメモを先頭ゼロ除去して該当行のinputに自動入力
+    if (memoVal !== null) {
+      const memoNum = String(Number(memoVal)); // 010 → "10"
+      const gk = qrCurrentGroupKey;
+      const ri = matchedRowIdx;
+      // 最初のコードメモ入力欄(inputIdx=0)に自動入力
+      const cacheKey = gk + '__' + ri + '__0';
+      codeMemoCache[cacheKey] = memoNum;
+      // 画面上のinputにも反映（data-group/row/idx属性で検索）
+      const inp = document.querySelector(`.code-input[data-group="${CSS.escape(gk)}"][data-row="${ri}"][data-idx="0"]`);
+      if (inp) { inp.value = memoNum; inp.classList.toggle('filled', !!memoNum); }
+    }
+    resultMsg = `✅ ${r.品種}（${r.産地}）の行が見つかりました` + (memoVal !== null ? `\nコードメモ: ${String(Number(memoVal))}` : '');
   } else if (code8) {
-    resultMsg = `⚠️ コード ${code8} に一致する行が見つかりません\n入力値（手動確認）: ${displayVal}`;
+    // デバッグ: グループ内の全行コードを表示
+    let debugInfo = '';
+    if (g) {
+      const rowCodes = g.rows.map((r, i) => {
+        const rc = pad2(r.原採種コード) + pad2(r.産地コード) + pad2(r.品種コード) + pad2(r.規格コード) + pad2(r.荷姿コード);
+        return `行${i+1}: ${rc} (原採種=${r.原採種コード},産地=${r.産地コード},品種=${r.品種コード},規格=${r.規格コード},荷姿=${r.荷姿コード})`;
+      });
+      debugInfo = '\n[行一覧]\n' + rowCodes.join('\n');
+    }
+    resultMsg = `⚠️ コード ${code10} に一致する行が見つかりません\n入力値（手動確認）: ${displayVal}${debugInfo}`;
   } else {
     resultMsg = `読み取り: ${displayVal}`;
   }
