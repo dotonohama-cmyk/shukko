@@ -235,13 +235,21 @@
   .filter-panel.collapsed .ft-chevron { transform:rotate(-90deg); }
   .filter-panel.collapsed .filter-content { display:none; }
   .filter-panel.collapsed .filter-toggle { margin-bottom:0; }
-  .filter-content .toolbar { margin-bottom:0; }
+  .filter-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:9px 12px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px; }
+  .fb-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .fb-row + .fb-row { border-top:1px solid var(--border-light); padding-top:8px; }
+  .fb-row .sort-label { min-width:48px; }
 
   @media (max-width:480px) {
     .app-title { font-size:14px; }
     .header-actions { gap:4px; }
     .header-actions .btn { padding:6px 8px; font-size:11px; }
     .header-actions .btn svg { display:none; }
+  }
+  @media (max-width:400px) {
+    .app-header { padding-left:max(10px, env(safe-area-inset-left)); padding-right:max(10px, env(safe-area-inset-right)); }
+    .app-title { font-size:13px; }
+    .header-actions .btn { padding:6px 7px; }
   }
 
   @media (max-width:580px) {
@@ -400,6 +408,10 @@
 <header class="app-header">
   <div class="app-title">出庫<span>管理</span>システム</div>
   <div class="header-actions">
+    <button class="btn btn-secondary" onclick="openSummary()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      集計
+    </button>
     <button class="btn btn-secondary" onclick="openBackup()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
       バックアップ
@@ -424,36 +436,23 @@
       <span class="ft-summary" id="filterSummary"></span>
     </button>
     <div class="filter-content" id="filterContent">
-      <!-- SORT BAR -->
-      <div class="sort-bar">
-        <span class="sort-label">日付絞込</span>
-        <div id="dateSortBtns" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
-        <div class="sort-divider"></div>
-        <span class="sort-label">並び順</span>
-        <button class="sort-btn" id="sortTime" onclick="setSortKey('time')">時刻</button>
-        <button class="sort-btn" id="sortCode" onclick="setSortKey('code')">コード</button>
-        <button class="sort-btn" id="sortName" onclick="setSortKey('name')">五十音</button>
-        <div class="sort-divider"></div>
-        <button class="sort-btn" id="sortAsc"  onclick="setSortOrder('asc')">↑ 昇順</button>
-        <button class="sort-btn" id="sortDesc" onclick="setSortOrder('desc')">↓ 降順</button>
-      </div>
-
-      <!-- TOOLBAR -->
-      <div class="toolbar">
-        <div class="search-wrap">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input class="search-input" type="text" id="searchInput" placeholder="組合員名・品種・産地で検索…" oninput="filterRecords()">
+      <div class="filter-box">
+        <div class="fb-row">
+          <span class="sort-label">日付絞込</span>
+          <div id="dateSortBtns" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
         </div>
-        <button class="btn btn-secondary" onclick="toggleAll(true)">全展開</button>
-        <button class="btn btn-secondary" onclick="toggleAll(false)">全折畳</button>
-        <button class="btn btn-secondary" onclick="openSummary()">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          集計
-        </button>
-        <button class="btn btn-ghost" onclick="openDeleteModal()" style="color:var(--red);border-color:#fca5a5;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
-          削除
-        </button>
+        <div class="fb-row">
+          <span class="sort-label">並び順</span>
+          <button class="sort-btn" id="sortTime" onclick="setSortKey('time')">時刻</button>
+          <button class="sort-btn" id="sortCode" onclick="setSortKey('code')">コード</button>
+          <button class="sort-btn" id="sortName" onclick="setSortKey('name')">五十音</button>
+        </div>
+        <div class="fb-row">
+          <div class="search-wrap">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" type="text" id="searchInput" placeholder="組合員名・品種・産地で検索…" oninput="filterRecords()">
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -492,6 +491,10 @@
       <button class="btn btn-primary" onclick="manualSnapshot()">今の状態を記録</button>
       <button class="btn btn-secondary" onclick="exportBackupFile()">ファイルに書き出し</button>
       <button class="btn btn-secondary" onclick="document.getElementById('backupFileInput').click()">ファイルから復元</button>
+      <button class="btn btn-ghost" onclick="closeBackup(); openDeleteModal()" style="color:var(--red);border-color:#fca5a5;padding:7px 11px;font-size:12px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+        削除
+      </button>
     </div>
     <input type="file" id="backupFileInput" accept=".json,application/json" style="display:none" onchange="importBackupFile(event)">
     <div class="bk-list-title">バックアップ履歴（新しい順・最大40件）</div>
@@ -1021,6 +1024,8 @@ function readFile(file) {
       }
       let added = 0, skipped = 0;
       const mapped = [];
+      // Excelの「ふりがな」を読むため、組合員名の列番号を見出し行から探す
+      const nameCol = findHeaderCol(ws, ['組合員名', '組合員']);
       // コード列を検出（出力ファイルの「コード1」「コード2」…、旧形式の「コードメモ1」…）
       const headers = Object.keys(rows[0]);
       const codeNo = h => { const m = h.match(/^コード(?:メモ)?(\d+)$/); return m ? parseInt(m[1]) : null; };
@@ -1049,6 +1054,7 @@ function readFile(file) {
           荷姿:         r['荷姿'] || '',
           組合員コード: Number(r['組合員コード']) || 0,
           組合員:       r['組合員名'] || r['組合員'] || '',
+          組合員カナ:   pickKana(r) || furiganaOf(ws, nameCol, r.__rowNum__),
           基数:         parseFloat(r['基数']) || 0,
           重量:         parseFloat(r['重量']) || 0,
           車番:         String(r['車番'] ?? '').trim(),
@@ -1117,6 +1123,61 @@ function applyImportedMemos(importedRows) {
   });
   // 影響を受けたグループの自動出庫終了チェック
   affectedGroups.forEach(gk => checkAutoDone(gk));
+}
+
+// 組合員の読み（カナ）列：見出しは「組合員カナ」「組合員フリガナ」「フリガナ」「カナ」など
+const KANA_HEADERS = ['組合員カナ','組合員フリガナ','組合員ふりがな','組合員名カナ','組合員名フリガナ','フリガナ','ふりがな','カナ','読み'];
+function pickKana(r) {
+  for (const h of KANA_HEADERS) {
+    const v = String(r[h] ?? '').trim();
+    if (v) return v;
+  }
+  return '';
+}
+// 見出し行（1行目）から列番号を探す
+function findHeaderCol(ws, names) {
+  if (!ws || !ws['!ref']) return -1;
+  const rng = XLSX.utils.decode_range(ws['!ref']);
+  for (const name of names) {
+    for (let c = rng.s.c; c <= rng.e.c; c++) {
+      const cell = ws[XLSX.utils.encode_cell({ r: rng.s.r, c })];
+      if (cell && String(cell.v).trim() === name) return c;
+    }
+  }
+  return -1;
+}
+// Excelの「ふりがな」機能で付けた読みをセルから取り出す（例：中村　剛也 → ナカムラ　タケヤ）
+function furiganaOf(ws, col, rowNum) {
+  if (col < 0 || rowNum === undefined) return '';
+  const cell = ws[XLSX.utils.encode_cell({ r: rowNum, c: col })];
+  if (!cell || typeof cell.r !== 'string' || cell.r.indexOf('<rPh') < 0) return '';
+  const unesc = t => t.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&');
+  const xml  = cell.r;
+  const base = [...String(cell.v ?? '')];
+  const runs = [];
+  const re = /<rPh\b[^>]*\bsb="(\d+)"[^>]*\beb="(\d+)"[^>]*>([\s\S]*?)<\/rPh>/g;
+  let m;
+  while ((m = re.exec(xml))) {
+    const text = (m[3].match(/<t[^>]*>([\s\S]*?)<\/t>/g) || []).map(t => unesc(t.replace(/<[^>]+>/g, ''))).join('');
+    runs.push({ sb: +m[1], eb: +m[2], text });
+  }
+  if (!runs.length) return '';
+  runs.sort((a, b) => a.sb - b.sb);
+  let out = '', i = 0;
+  for (const r of runs) {
+    if (r.sb < i) continue;
+    out += base.slice(i, r.sb).join('') + r.text;
+    i = Math.max(r.eb, r.sb);
+  }
+  out += base.slice(i).join('');
+  // 読みの付いていない漢字が残っている場合は使わない（不完全な読みで並べない）
+  return /[一-鿿㐀-䶿々]/.test(out) ? '' : out.trim();
+}
+const jaCollator = new Intl.Collator('ja', { sensitivity:'base', numeric:true });
+// ひらがな→カタカナ、半角カナ→全角、空白除去して読みの並びをそろえる
+function nameSortKey(meta) {
+  const raw = (meta.組合員カナ || meta.組合員 || '').normalize('NFKC').replace(/[\s\u3000]/g, '');
+  return raw.replace(/[\u3041-\u3096]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
 }
 
 // 日付は「YYYY/MM/DD」に統一する（Excelシリアル値・Date・各種文字列に対応）
@@ -1200,13 +1261,10 @@ function updateSortBar() {
   if (c) c.innerHTML = dates.map(d =>
     `<button class="sort-btn ${activeDates.has(d)?'active':''}" onclick="toggleDateFilter('${d}')">${d}</button>`
   ).join('');
-  document.getElementById('sortAsc').classList.toggle('active',  sortOrder==='asc');
-  document.getElementById('sortDesc').classList.toggle('active', sortOrder==='desc');
   document.getElementById('sortTime').classList.toggle('active', sortKey==='time');
   document.getElementById('sortCode').classList.toggle('active', sortKey==='code');
   document.getElementById('sortName').classList.toggle('active', sortKey==='name');
 }
-function setSortOrder(o) { sortOrder = o; updateSortBar(); renderAll(); }
 function setSortKey(k)   { sortKey   = k; updateSortBar(); renderAll(); }
 function toggleDateFilter(d) {
   activeDates.has(d) ? activeDates.delete(d) : activeDates.add(d);
@@ -1232,7 +1290,7 @@ function updateFilterSummary() {
   if (!el) return;
   const parts = [];
   if (activeDates.size > 0) parts.push('日付 ' + [...activeDates].sort().join('・'));
-  parts.push({ time:'時刻', code:'コード', name:'五十音' }[sortKey] + (sortOrder === 'asc' ? '↑' : '↓'));
+  parts.push({ time:'時刻', code:'コード', name:'五十音' }[sortKey]);
   const q = document.getElementById('searchInput')?.value.trim();
   if (q) parts.push(`検索「${q}」`);
   el.textContent = parts.join(' ／ ');
@@ -1254,7 +1312,7 @@ function renderAll(filterText) {
     if (activeDates.size > 0 && !activeDates.has(g.meta.日付)) return false;
     if (!q) return true;
     const m = s => String(s).toLowerCase().includes(q);
-    return m(g.meta.組合員) || g.rows.some(r => m(r.品種)||m(r.産地)||m(r.原採種));
+    return m(g.meta.組合員) || m(g.meta.組合員カナ || '') || g.rows.some(r => m(r.品種)||m(r.産地)||m(r.原採種));
   });
 
   const sortKeys = arr => arr.sort((a,b) => {
@@ -1263,8 +1321,9 @@ function renderAll(filterText) {
       ta = groups[a].meta.組合員コード; tb = groups[b].meta.組合員コード;
       return sortOrder==='asc' ? ta - tb : tb - ta;
     } else if (sortKey === 'name') {
-      ta = groups[a].meta.組合員; tb = groups[b].meta.組合員;
-      return sortOrder==='asc' ? ta.localeCompare(tb,'ja') : tb.localeCompare(ta,'ja');
+      // 読み（カナ）があれば読みで、なければ名前で並べる
+      ta = nameSortKey(groups[a].meta); tb = nameSortKey(groups[b].meta);
+      return sortOrder==='asc' ? jaCollator.compare(ta, tb) : jaCollator.compare(tb, ta);
     } else {
       ta = earliestTime(groups[a]); tb = earliestTime(groups[b]);
       return sortOrder==='asc' ? ta.localeCompare(tb) : tb.localeCompare(ta);
@@ -1443,14 +1502,6 @@ function toggleGroup(sid) {
   document.querySelectorAll('.accordion-item').forEach(el => el.classList.remove('open'));
   // 元々閉じていた場合だけ開く（開いていた場合はトグルで閉じる）
   if (!isOpen) target.classList.add('open');
-}
-function toggleAll(open) {
-  if (open) {
-    // 全展開は排他制御を外して全部開く
-    document.querySelectorAll('.accordion-item').forEach(el => el.classList.toggle('open', true));
-  } else {
-    document.querySelectorAll('.accordion-item').forEach(el => el.classList.remove('open'));
-  }
 }
 
 // ===== 優先 =====
@@ -1720,6 +1771,7 @@ function onCodeKeydown(e, el) {
 }
 
 // ===== 出力（.xlsx） =====
+// フリガナはコード開始列（W）から右に25列目（AV列）
 // 列: A出庫整理番号 B日時 C原採種コード D原採種 E品種コード F品種 G産地コード H産地
 //     I組合員コード J組合員名 K規格コード L規格 M荷姿コード N荷姿 O車番 P出庫予定時間
 //     Q基数 R重量 S〜V空欄 W〜コード1, コード2, …
@@ -1728,6 +1780,9 @@ function onCodeKeydown(e, el) {
 const OUT_HEADERS = ['出庫整理番号','日時','原採種コード','原採種','品種コード','品種','産地コード','産地',
   '組合員コード','組合員名','規格コード','規格','荷姿コード','荷姿','車番','出庫予定時間','基数','重量'];
 const OUT_BLANK_COLS = 4;
+const OUT_CODE_START = OUT_HEADERS.length + OUT_BLANK_COLS;   // W列
+const OUT_KANA_OFFSET = 25;                                     // コード開始列から右に25列 → AV列
+const OUT_KANA_COL = OUT_CODE_START + OUT_KANA_OFFSET;
 
 function roundQty(v) { return parseFloat((+v).toFixed(4)); }
 // 6 → 6-1、6-1 → 6-2（残り行を再インポートして再度残った場合）
@@ -1787,6 +1842,11 @@ function exportXlsx() {
   const out = [...doneRows, ...remainRows];
   if (out.length === 0) { showToast('出力する明細がありません'); return; }
   const maxCodes = Math.max(0, ...out.map(o => o.codes.length));
+  if (maxCodes > OUT_KANA_OFFSET) {
+    const over = out.find(o => o.codes.length > OUT_KANA_OFFSET);
+    showToast(`コードが${OUT_KANA_OFFSET}個を超える明細があり出力できません（出庫整理番号 ${over.id}）`, 'error');
+    return;
+  }
   const header = [...OUT_HEADERS, ...Array(OUT_BLANK_COLS).fill(''),
                   ...Array.from({ length: maxCodes }, (_, i) => `コード${i+1}`)];
 
@@ -1809,10 +1869,12 @@ function exportXlsx() {
     if (o.time) setCell(R, 15, ts !== null ? { t:'n', v: ts, z:'h:mm' } : { t:'s', v: String(o.time) });
     setCell(R, 16, { t:'n', v: o.qty });
     if (o.weight !== '') setCell(R, 17, { t:'n', v: o.weight });
-    o.codes.forEach((c, k) => setCell(R, OUT_HEADERS.length + OUT_BLANK_COLS + k, valCell(codeCellValue(c))));
+    o.codes.forEach((c, k) => setCell(R, OUT_CODE_START + k, valCell(codeCellValue(c))));
+    if (r.組合員カナ) setCell(R, OUT_KANA_COL, { t:'s', v: String(r.組合員カナ) });
   });
-  ws['!ref']  = XLSX.utils.encode_range({ s:{ r:0, c:0 }, e:{ r: out.length, c: header.length - 1 } });
-  ws['!cols'] = header.map((h, c) => ({ wch: c === 0 ? 13 : c === 9 ? 12 : 9 }));
+  setCell(0, OUT_KANA_COL, { t:'s', v:'フリガナ' });
+  ws['!ref']  = XLSX.utils.encode_range({ s:{ r:0, c:0 }, e:{ r: out.length, c: OUT_KANA_COL } });
+  ws['!cols'] = Array.from({ length: OUT_KANA_COL + 1 }, (_, c) => ({ wch: c === 0 ? 13 : c === 9 ? 12 : c === OUT_KANA_COL ? 18 : 9 }));
 
   const name = `出庫コードメモ_${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
   const wb = XLSX.utils.book_new();
