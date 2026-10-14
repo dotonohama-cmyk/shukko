@@ -555,6 +555,7 @@ let activeDates   = new Set();
 const importedIds = new Set();
 // コードメモをメモリ上でも管理（DOM再生成でも消えない）
 let codeMemoCache = {};   // key: "group__row__idx" → value: string
+let codeDateCache = {};   // key: 同上 → 出庫日（コードを入力した日 YYYY/MM/DD）
 
 // =====================================================================
 // ===== 永続化レイヤー =====
@@ -710,7 +711,31 @@ function syncCacheFromDOM() {
     if (v) codeMemoCache[k] = v;
     else delete codeMemoCache[k];
   });
+  reconcileCodeDates();
 }
+
+function todayYMD() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())}`;
+}
+// コードを入力した日を出庫日として記録（消したコードの日付は外す）
+function reconcileCodeDates() {
+  const today = todayYMD();
+  Object.keys(codeMemoCache).forEach(k => { if (!codeDateCache[k]) codeDateCache[k] = today; });
+  Object.keys(codeDateCache).forEach(k => { if (!codeMemoCache[k]) delete codeDateCache[k]; });
+}
+
+// 出庫整理番号 yyyymmdd000（残り行は末尾に -1）から出庫予定日 YYYY/MM/DD を取り出す
+function scheduledDateFromId(id) {
+  const m = baseShipId(id).match(/^(\d{4})(\d{2})(\d{2})\d{3}$/);
+  if (!m) return '';
+  const y = +m[1], mo = +m[2], d = +m[3];
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return '';
+  return `${m[1]}/${m[2]}/${m[3]}`;
+}
+
+// 出庫整理番号の重複判定用：未出庫の残り行に付けた「-1」を除いた番号
+function baseShipId(id) { return String(id ?? '').trim().replace(/-1$/, ''); }
 
 function buildPayload() {
   syncCacheFromDOM();
@@ -723,6 +748,7 @@ function buildPayload() {
     priorityGroups: [...priorityGroups],
     importedIds:    [...importedIds],
     codeMemo:       { ...codeMemoCache },
+    codeDate:       { ...codeDateCache },
     cleared:        allData.length === 0,
     savedAt:        Date.now(),
   };
@@ -830,6 +856,7 @@ function applyPayload(p) {
   importedIds.clear();
   (p.importedIds || []).forEach(id => importedIds.add(String(id)));
   codeMemoCache  = { ...(p.codeMemo || {}) };
+  codeDateCache  = { ...(p.codeDate || {}) };
   activeDates    = new Set([...activeDates].filter(d => allData.some(r => r.日付 === d)));
   buildGroups(); updateSortBar(); renderAll();
 }
@@ -1034,14 +1061,17 @@ function readFile(file) {
       rows.forEach(r => {
         const id = typeof r['出庫整理番号'] === 'string' ? r['出庫整理番号'].trim() : r['出庫整理番号'];
         if (id === '' && !r['組合員コード']) return; // 空行
-        const idStr = String(id);
-        if (id !== '' && id !== undefined && importedIds.has(idStr)) { skipped++; return; }
-        if (id !== '' && id !== undefined) importedIds.add(idStr);
+        // 重複は「-1」を除いた番号で判定（6 と 6-1 は同じ明細として扱う）
+        const idStr = String(id), baseId = baseShipId(id);
+        if (id !== '' && id !== undefined && (importedIds.has(baseId) || importedIds.has(idStr))) { skipped++; return; }
+        if (id !== '' && id !== undefined) importedIds.add(baseId);
         // コード列を配列で収集（空白は除く）
         const memos = codeMemoHeaders.map(h => String(r[h] ?? '').trim());
         mapped.push({
           出庫整理番号: id === undefined ? '' : id,
-          日付:         formatDate(r['日時'] !== undefined ? r['日時'] : r['日付']),
+          // 日付＝出庫予定日（出庫整理番号 yyyymmdd000 の先頭8桁から）。番号が別形式ならB列を使う
+          日付:         scheduledDateFromId(id) || formatDate(r['日時'] !== undefined ? r['日時'] : r['日付']),
+          出庫日:       formatDate(r['日時'] !== undefined ? r['日時'] : r['日付']),
           原採種コード: Number(r['原採種コード']) || 0,
           原採種:       r['原採種'] || '',
           産地コード:   Number(r['産地コード']) || 0,
@@ -1121,6 +1151,16 @@ function applyImportedMemos(importedRows) {
     const k = `${el.dataset.group}__${el.dataset.row}__${el.dataset.idx}`;
     if (el.value) codeMemoCache[k] = el.value;
   });
+  // 取り込んだコードの出庫日は、そのファイルのB列（日時）を引き継ぐ
+  importedRows.forEach(row => {
+    const info = rowInfoMap.get(row);
+    if (!info || !row.出庫日) return;
+    (row._importedMemos || []).forEach((memo, n) => {
+      const k = `${info.gk}__${info.ri}__${n}`;
+      if (memo !== '' && codeMemoCache[k] && !codeDateCache[k]) codeDateCache[k] = row.出庫日;
+    });
+  });
+  reconcileCodeDates();
   // 影響を受けたグループの自動出庫終了チェック
   affectedGroups.forEach(gk => checkAutoDone(gk));
 }
@@ -1258,6 +1298,7 @@ function updateHeaderTime(groupKey) {
 function updateSortBar() {
   const dates = [...new Set(allData.map(r => r.日付))].filter(Boolean).sort();
   const c = document.getElementById('dateSortBtns');
+  if (c) c.closest('.fb-row').style.display = dates.length ? '' : 'none';
   if (c) c.innerHTML = dates.map(d =>
     `<button class="sort-btn ${activeDates.has(d)?'active':''}" onclick="toggleDateFilter('${d}')">${d}</button>`
   ).join('');
@@ -1537,13 +1578,14 @@ function removeGroupsData(keys) {
   // 削除した明細は再インポートできるように重複チェックから外す
   rm.forEach(r => {
     const id = r.出庫整理番号;
-    if (id !== '' && id !== undefined && id !== null) importedIds.delete(String(id));
+    if (id !== '' && id !== undefined && id !== null) { importedIds.delete(String(id)); importedIds.delete(baseShipId(id)); }
   });
   allData = allData.filter(r => !rm.has(r));
   keys.forEach(k => {
     doneGroups.delete(k);
     priorityGroups.delete(k);
     Object.keys(codeMemoCache).forEach(mk => { if (mk.startsWith(k + '__')) delete codeMemoCache[mk]; });
+    Object.keys(codeDateCache).forEach(mk => { if (mk.startsWith(k + '__')) delete codeDateCache[mk]; });
   });
   intentionallyEmpty = allData.length === 0;
   buildGroups();
@@ -1611,7 +1653,7 @@ async function deleteAll() {
   closeDeleteModal();
   await takeSnapshot('全削除前');
   allData = []; groups = {}; doneGroups = new Set(); priorityGroups = new Set();
-  activeDates = new Set(); importedIds.clear(); codeMemoCache = {};
+  activeDates = new Set(); importedIds.clear(); codeMemoCache = {}; codeDateCache = {};
   intentionallyEmpty = true;
   updateSortBar(); renderAll(); updateStats([]);
   await flushAll();
@@ -1775,8 +1817,8 @@ function onCodeKeydown(e, el) {
 // 列: A出庫整理番号 B日時 C原採種コード D原採種 E品種コード F品種 G産地コード H産地
 //     I組合員コード J組合員名 K規格コード L規格 M荷姿コード N荷姿 O車番 P出庫予定時間
 //     Q基数 R重量 S〜V空欄 W〜コード1, コード2, …
-// ・コードが入力された分 → 出庫済み行（元の出庫整理番号・日時は出力日・入力コード数ぶんの基数）
-// ・残りがある明細       → 残り行（出庫整理番号-1・元の日時・元の出庫予定時間・残基数）を末尾に出力
+// ・コードが入力された分 → 出庫済み行（元の出庫整理番号・日時はコードを入力した日・入力コード数ぶんの基数）
+// ・残りがある明細       → 残り行（出庫整理番号-1・日時は空欄・元の出庫予定時間・残基数）を末尾に出力
 const OUT_HEADERS = ['出庫整理番号','日時','原採種コード','原採種','品種コード','品種','産地コード','産地',
   '組合員コード','組合員名','規格コード','規格','荷姿コード','荷姿','車番','出庫予定時間','基数','重量'];
 const OUT_BLANK_COLS = 4;
@@ -1785,12 +1827,8 @@ const OUT_KANA_OFFSET = 25;                                     // コード開�
 const OUT_KANA_COL = OUT_CODE_START + OUT_KANA_OFFSET;
 
 function roundQty(v) { return parseFloat((+v).toFixed(4)); }
-// 6 → 6-1、6-1 → 6-2（残り行を再インポートして再度残った場合）
-function nextRemainId(id) {
-  const s = String(id ?? '').trim();
-  const m = s.match(/^(.*)-(\d+)$/);
-  return m ? `${m[1]}-${parseInt(m[2]) + 1}` : `${s}-1`;
-}
+// 未出庫の残り行は出庫整理番号に「-1」を付ける（6 → 6-1、6-1 の残りも 6-1）
+function nextRemainId(id) { return `${baseShipId(id)}-1`; }
 function dateToSerial(str) {
   const m = String(str).match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
   return m ? Date.UTC(+m[1], +m[2]-1, +m[3]) / 86400000 + 25569 : null;
@@ -1820,21 +1858,21 @@ function exportXlsx() {
     const cnt  = Math.ceil(kisu);
     const frac = roundQty(kisu - Math.floor(kisu));
     const codes = [];
-    let doneQty = 0;
+    let doneQty = 0, shipDate = '';
     for (let n = 0; n < cnt; n++) {
       const v = codeMemoCache[`${info.gk}__${info.ri}__${n}`];
       const w = (n === cnt - 1 && frac > 0) ? frac : 1;   // 端数の枠は端数ぶん
-      if (v) { codes.push(v); doneQty += w; }
+      if (v) { codes.push(v); doneQty += w; const dd = codeDateCache[`${info.gk}__${info.ri}__${n}`]; if (dd && dd > shipDate) shipDate = dd; }
     }
     doneQty = roundQty(doneQty);
     const remain = roundQty(kisu - doneQty);
     const weight = parseFloat(r.重量) || 0;
     const doneWeight = weight && kisu ? roundQty(weight * doneQty / kisu) : '';
     if (codes.length > 0) {
-      doneRows.push({ id: r.出庫整理番号, date: todayStr, time: r.出庫予定時間, qty: doneQty, weight: doneWeight, codes, r });
+      doneRows.push({ id: r.出庫整理番号, date: shipDate || todayStr, time: r.出庫予定時間, qty: doneQty, weight: doneWeight, codes, r });
     }
     if (remain > 0) {
-      remainRows.push({ id: nextRemainId(r.出庫整理番号), date: r.日付, time: r.出庫予定時間, qty: remain,
+      remainRows.push({ id: nextRemainId(r.出庫整理番号), date: '', time: r.出庫予定時間, qty: remain,
         weight: weight && kisu ? roundQty(weight - (doneWeight || 0)) : '', codes: [], r });
     }
   });
